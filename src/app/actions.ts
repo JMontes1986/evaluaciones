@@ -31,12 +31,9 @@ const evaluationSchema = z.object({
 
 
 export async function submitEvaluation(prevState: any, formData: FormData) {
-  // This is a workaround to get checkbox values from server actions
-  const teacherIds = formData.getAll('teacherIds[]').filter(id => id);
-
   const rawData = {
     gradeId: formData.get('gradeId'),
-    teacherIds: teacherIds,
+    teacherIds: JSON.parse(formData.get('teacherIds') as string),
     evaluations: JSON.parse(formData.get('evaluations') as string)
   };
 
@@ -51,7 +48,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     };
   }
 
-  const { gradeId, evaluations } = validatedFields.data;
+  const { gradeId, teacherIds, evaluations } = validatedFields.data;
   const studentId = `student_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
   try {

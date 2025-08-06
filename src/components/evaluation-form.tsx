@@ -87,8 +87,9 @@ export function EvaluationForm() {
   };
 
   const handleFormAction = (formData: FormData) => {
-    const evaluations = form.getValues('evaluations');
-    formData.append('evaluations', JSON.stringify(evaluations));
+    const values = form.getValues();
+    formData.append('evaluations', JSON.stringify(values.evaluations));
+    formData.append('teacherIds', JSON.stringify(values.teacherIds));
     formAction(formData);
   }
 
@@ -150,8 +151,6 @@ export function EvaluationForm() {
                             <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
                               <FormControl>
                                 <Checkbox
-                                  name="teacherIds[]"
-                                  value={teacher.id}
                                   checked={isChecked}
                                   onCheckedChange={(checked) => {
                                     const newValue = checked
