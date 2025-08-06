@@ -11,6 +11,7 @@ export function AppHeader({ studentName }: { studentName?: string}) {
   const pathname = usePathname();
 
   const navLinks = [
+    { href: "/", label: "Inicio" },
     { href: "/evaluation", label: "Evaluación" },
   ];
 
@@ -21,35 +22,36 @@ export function AppHeader({ studentName }: { studentName?: string}) {
           <BookOpenCheck className="h-7 w-7 text-primary" />
           <span className="text-xl font-bold font-headline">GradeWise</span>
         </Link>
-        {studentName && (
-            <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navLinks.map((link) => (
-                <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                    "transition-colors hover:text-primary",
-                    pathname === link.href ? "text-primary" : "text-muted-foreground"
-                )}
-                >
-                {link.label}
-                </Link>
-            ))}
-            </nav>
-        )}
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+        {navLinks.map((link) => (
+            <Link
+            key={link.href}
+            href={link.href}
+            className={cn(
+                "transition-colors hover:text-primary",
+                pathname === link.href ? "text-primary font-bold" : "text-muted-foreground"
+            )}
+            >
+            {link.label}
+            </Link>
+        ))}
+        </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
            {studentName ? (
-             <form action={studentLogout}>
-                <Button variant="outline" type="submit">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar Sesión
-                </Button>
-             </form>
-           ) : (
+             <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground hidden sm:inline">Hola, {studentName.split(' ')[0]}</span>
+                <form action={studentLogout}>
+                    <Button variant="outline" type="submit" size="sm">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Salir
+                    </Button>
+                </form>
+             </div>
+           ) : pathname !== '/login' ? (
              <Button asChild variant="secondary">
                 <Link href="/login">Acceso Admin</Link>
              </Button>
-           )}
+           ) : null}
         </div>
       </div>
     </header>
