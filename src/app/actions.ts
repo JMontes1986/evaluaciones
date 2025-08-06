@@ -1,11 +1,11 @@
+
 "use server";
 
 import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
-import { getFeedbackSuggestions as getFeedbackSuggestionsFlow, type FeedbackAssistantInput } from "@/ai/flows/feedback-assistant";
-import type { Grade, Teacher } from "@/lib/types";
+import type { Evaluation, Grade, Teacher } from "@/lib/types";
 
 const evaluationQuestions = [
   { id: "q1", text: "Demuestra un profundo conocimiento de la materia." },
@@ -94,52 +94,6 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
   }
 }
 
-const inputSchema = z.object({
-  evaluationText: z.string().min(10, { message: "Por favor, proporciona al menos 10 caracteres de retroalimentación para obtener sugerencias." }),
-});
-
-export async function getFeedbackSuggestions(prevState: any, formData: FormData) {
-  const evaluationText = formData.get("evaluationText") as string;
-
-  const validatedFields = inputSchema.safeParse({ evaluationText });
-
-  if (!validatedFields.success) {
-    return {
-      success: false,
-      message: "La validación falló",
-      suggestions: null,
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
-
-  try {
-    const result = await getFeedbackSuggestionsFlow({ evaluationText: validatedFields.data.evaluationText });
-    if (!result || !result.suggestions || result.suggestions.length === 0) {
-      return {
-        success: true,
-        message: "No hay sugerencias disponibles en este momento. ¡Tu retroalimentación se ve bien!",
-        suggestions: ["Tu retroalimentación es clara y concisa. No hay sugerencias en este momento."],
-        errors: null,
-      }
-    }
-    return {
-      success: true,
-      message: "Éxito",
-      suggestions: result.suggestions,
-      errors: null,
-    }
-  } catch (error) {
-    console.error("Error en la retroalimentación de la IA:", error);
-    return {
-      success: false,
-      message: "Ocurrió un error al obtener sugerencias. Por favor, inténtalo de nuevo más tarde.",
-      suggestions: null,
-      errors: null,
-    }
-  }
-}
-
-
 export async function getGrades(): Promise<Grade[]> {
     const gradesCollection = collection(db, "grades");
     const gradeSnapshot = await getDocs(gradesCollection);
@@ -152,4 +106,19 @@ export async function getTeachers(): Promise<Teacher[]> {
     const teacherSnapshot = await getDocs(teachersCollection);
     const teacherList = teacherSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher));
     return teacherList;
+}
+
+export async function getEvaluations(): Promise<Evaluation[]> {
+    const evaluationsCollection = collection(db, "evaluations");
+    const evaluationSnapshot = await getDocs(evaluationsCollection);
+    const evaluationList = evaluationSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+        id: doc.id, 
+        ...data,
+        // Convert Firestore Timestamp to string
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+      } as Evaluation
+    });
+    return evaluationList;
 }

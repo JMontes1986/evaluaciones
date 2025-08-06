@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -9,10 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Download, BarChart3, Users, Star, GraduationCap } from "lucide-react";
 import type { Evaluation, Teacher, Grade } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
-import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
 import { Skeleton } from "./ui/skeleton";
-import { getGrades, getTeachers } from "@/app/actions";
+import { getGrades, getTeachers, getEvaluations } from "@/app/actions";
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -26,13 +25,12 @@ export function DashboardClient() {
   useEffect(() => {
     const fetchEvaluations = async () => {
       try {
-        const [evalsSnapshot, gradesData, teachersData] = await Promise.all([
-            getDocs(collection(db, "evaluations")),
+        const [evals, gradesData, teachersData] = await Promise.all([
+            getEvaluations(),
             getGrades(),
             getTeachers()
         ]);
         
-        const evals = evalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Evaluation));
         setEvaluations(evals);
         setFilteredData(evals);
         setGrades(gradesData);
