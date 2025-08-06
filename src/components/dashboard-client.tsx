@@ -1,20 +1,42 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Download, BarChart3, Users, Star, GraduationCap } from 'lucide-react';
-import { evaluations, teachers, grades } from '@/lib/mock-data';
+import { teachers, grades } from '@/lib/mock-data';
 import type { Evaluation, Teacher, Grade } from '@/lib/types';
 import { evaluationQuestions } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { Skeleton } from './ui/skeleton';
 
 export function DashboardClient() {
-  const [filteredData, setFilteredData] = useState<Evaluation[]>(evaluations);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filteredData, setFilteredData] = useState<Evaluation[]>([]);
   const [selectedGrade, setSelectedGrade] = useState('all');
   const [selectedTeacher, setSelectedTeacher] = useState('all');
+
+  useEffect(() => {
+    const fetchEvaluations = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "evaluations"));
+        const evals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Evaluation));
+        setEvaluations(evals);
+        setFilteredData(evals);
+      } catch (error) {
+        console.error("Error fetching evaluations: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvaluations();
+  }, []);
 
   const filterData = useCallback(() => {
     let data = evaluations;
@@ -25,16 +47,18 @@ export function DashboardClient() {
       data = data.filter(e => e.teacherId === selectedTeacher);
     }
     setFilteredData(data);
-  }, [selectedGrade, selectedTeacher]);
+  }, [evaluations, selectedGrade, selectedTeacher]);
 
-  useMemo(() => {
+  useEffect(() => {
     filterData();
   }, [filterData]);
 
   const getAverageScore = (evals: Evaluation[]) => {
     if (evals.length === 0) return 0;
     const totalScore = evals.reduce((acc, curr) => {
+      if (!curr.scores) return acc;
       const scores = Object.values(curr.scores);
+      if (scores.length === 0) return acc;
       return acc + scores.reduce((sAcc, sCurr) => sAcc + sCurr, 0) / scores.length;
     }, 0);
     return (totalScore / evals.length).toFixed(2);
@@ -70,7 +94,7 @@ export function DashboardClient() {
   
   const questionAverages = useMemo(() => {
     return evaluationQuestions.map(q => {
-      const scores = filteredData.map(e => e.scores[q.id]).filter(Boolean);
+      const scores = filteredData.map(e => e.scores?.[q.id]).filter(Boolean);
       if (scores.length === 0) return null;
       const average = scores.reduce((a, b) => a + b, 0) / scores.length;
       return { name: q.text.substring(0, 25) + '...', average: average.toFixed(2) };
@@ -100,6 +124,46 @@ export function DashboardClient() {
     a.click();
     document.body.removeChild(a);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-5 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-1/2 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="w-full h-[350px]" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
 
   return (
     <div className="space-y-6">

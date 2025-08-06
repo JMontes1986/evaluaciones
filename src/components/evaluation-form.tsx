@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,14 +9,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { grades, teachers } from '@/lib/mock-data';
-import type { Teacher, Evaluation } from '@/lib/types';
+import type { Teacher } from '@/lib/types';
 import { evaluationQuestions } from '@/lib/types';
 import { Textarea } from './ui/textarea';
-import { ArrowRight, Send, User, Book } from 'lucide-react';
+import { Send, User } from 'lucide-react';
+import { useActionState } from 'react';
+import { submitEvaluation } from '@/app/actions';
 
 const evaluationSchema = z.object({
   gradeId: z.string().min(1, 'Por favor, selecciona un grado.'),
@@ -35,10 +37,17 @@ const evaluationSchema = z.object({
 
 type EvaluationFormData = z.infer<typeof evaluationSchema>;
 
+const initialState = {
+  success: false,
+  message: '',
+  errors: null,
+};
+
 export function EvaluationForm() {
   const [selectedGrade, setSelectedGrade] = useState<string>('');
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
   const { toast } = useToast();
+  const [state, formAction] = useActionState(submitEvaluation, initialState);
 
   const form = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationSchema),
@@ -51,30 +60,41 @@ export function EvaluationForm() {
 
   const selectedTeachers = form.watch('teacherIds');
 
+  useEffect(() => {
+    if (state.message) {
+      toast({
+        title: state.success ? '✅ ¡Éxito!' : '❌ ¡Error!',
+        description: state.message,
+        variant: state.success ? 'default' : 'destructive',
+        className: state.success ? 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600' : ''
+      });
+      if(state.success) {
+        form.reset();
+        setSelectedGrade('');
+        setAvailableTeachers([]);
+      }
+    }
+  }, [state, toast, form]);
+
+
   const handleGradeChange = (gradeId: string) => {
     setSelectedGrade(gradeId);
     form.setValue('gradeId', gradeId);
     const teachersForGrade = teachers.filter((t) => t.grades.includes(gradeId));
     setAvailableTeachers(teachersForGrade);
-    form.setValue('teacherIds', []); // Reset teacher selection
-    form.setValue('evaluations', {}); // Reset evaluations
+    form.setValue('teacherIds', []);
+    form.setValue('evaluations', {});
   };
-  
-  const onSubmit = (data: EvaluationFormData) => {
-    console.log(data);
-    toast({
-      title: '✅ ¡Evaluación Enviada!',
-      description: 'Gracias por tus valiosos comentarios.',
-      className: 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600'
-    });
-    form.reset();
-    setSelectedGrade('');
-    setAvailableTeachers([]);
-  };
+
+  const handleFormAction = (formData: FormData) => {
+    const evaluations = form.getValues('evaluations');
+    formData.append('evaluations', JSON.stringify(evaluations));
+    formAction(formData);
+  }
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form action={handleFormAction} className="space-y-8">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Paso 1: Selecciona tu Grado</CardTitle>
@@ -86,7 +106,7 @@ export function EvaluationForm() {
               name="gradeId"
               render={({ field }) => (
                 <FormItem>
-                  <Select onValueChange={handleGradeChange} defaultValue={field.value}>
+                  <Select onValueChange={handleGradeChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona tu grado..." />
@@ -100,6 +120,7 @@ export function EvaluationForm() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -124,19 +145,27 @@ export function EvaluationForm() {
                         control={form.control}
                         name="teacherIds"
                         render={({ field }) => {
+                          const isChecked = field.value?.includes(teacher.id);
                           return (
                             <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
                               <FormControl>
                                 <Checkbox
-                                  checked={field.value?.includes(teacher.id)}
+                                  name="teacherIds[]"
+                                  value={teacher.id}
+                                  checked={isChecked}
                                   onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, teacher.id])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== teacher.id
-                                          )
-                                        )
+                                    const newValue = checked
+                                      ? [...field.value, teacher.id]
+                                      : field.value?.filter(
+                                          (value) => value !== teacher.id
+                                        );
+                                    field.onChange(newValue);
+                                    
+                                    if (!checked) {
+                                      const currentEvals = form.getValues('evaluations');
+                                      delete currentEvals[teacher.id];
+                                      form.setValue('evaluations', currentEvals);
+                                    }
                                   }}
                                 />
                               </FormControl>
@@ -150,6 +179,13 @@ export function EvaluationForm() {
                       />
                     ))}
                   </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="teacherIds"
+                render={() => (
+                   <FormMessage />
                 )}
               />
             </CardContent>
@@ -204,6 +240,7 @@ export function EvaluationForm() {
                                     ))}
                                   </RadioGroup>
                                 </FormControl>
+                                <FormMessage />
                               </FormItem>
                             )}
                           />
@@ -221,6 +258,7 @@ export function EvaluationForm() {
                                   {...field}
                                 />
                               </FormControl>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
