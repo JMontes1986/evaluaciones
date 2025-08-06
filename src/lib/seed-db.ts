@@ -1,5 +1,5 @@
 
-import { collection, writeBatch, getDocs, doc } from "firebase/firestore";
+import { collection, writeBatch, getDocs, doc, query } from "firebase/firestore";
 import { db } from "./firebase"; // Asegúrate que la ruta a tu configuración de firebase sea correcta
 import type { Grade, Teacher, Student } from "./types";
 
@@ -63,7 +63,9 @@ async function seedDatabase() {
     const studentsBatch = writeBatch(db);
     const studentsCollection = collection(db, "students");
 
-    const existingStudents = await getDocs(studentsCollection);
+    // Borra los estudiantes existentes antes de añadir los nuevos.
+    const studentQuery = query(studentsCollection);
+    const existingStudents = await getDocs(studentQuery);
     existingStudents.forEach(doc => studentsBatch.delete(doc.ref));
 
     console.log("👨‍🎓 Añadiendo estudiantes...");
