@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from '@/hooks/use-toast';
-import type { Teacher, Grade } from '@/lib/types';
-import { evaluationQuestions } from '@/lib/types';
-import { Textarea } from './ui/textarea';
-import { Send, User } from 'lucide-react';
-import { useActionState } from 'react';
-import { submitEvaluation, getGrades, getTeachers } from '@/app/actions';
-import { Skeleton } from './ui/skeleton';
+import { useState, useEffect } from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import type { Teacher, Grade } from "@/lib/types";
+import { evaluationQuestions } from "@/lib/types";
+import { Textarea } from "./ui/textarea";
+import { Send, User } from "lucide-react";
+import { useActionState } from "react";
+import { submitEvaluation, getGrades, getTeachers } from "@/app/actions";
+import { Skeleton } from "./ui/skeleton";
 
 const evaluationSchema = z.object({
-  gradeId: z.string().min(1, 'Por favor, selecciona un grado.'),
-  teacherIds: z.array(z.string()).min(1, 'Por favor, selecciona al menos un profesor para evaluar.'),
+  gradeId: z.string().min(1, "Por favor, selecciona un grado."),
+  teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
   evaluations: z.record(
     z.string(),
     z.object({
@@ -30,7 +30,7 @@ const evaluationSchema = z.object({
         acc[q.id] = z.string().min(1, `Por favor, califica este criterio.`);
         return acc;
       }, {} as Record<string, z.ZodString>),
-      feedback: z.string().min(1, 'Por favor, proporciona retroalimentación por escrito.'),
+      feedback: z.string().min(1, "Por favor, proporciona retroalimentación por escrito."),
     })
   ),
 });
@@ -39,7 +39,7 @@ type EvaluationFormData = z.infer<typeof evaluationSchema>;
 
 const initialState = {
   success: false,
-  message: '',
+  message: "",
   errors: null,
 };
 
@@ -47,7 +47,7 @@ export function EvaluationForm() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedGrade, setSelectedGrade] = useState<string>('');
+  const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
@@ -64,9 +64,9 @@ export function EvaluationForm() {
       } catch (error) {
         console.error("Error fetching initial data:", error);
         toast({
-          title: '❌ ¡Error!',
-          description: 'No se pudieron cargar los datos de grados y profesores. Inténtalo de nuevo más tarde.',
-          variant: 'destructive',
+          title: "❌ ¡Error!",
+          description: "No se pudieron cargar los datos de grados y profesores. Inténtalo de nuevo más tarde.",
+          variant: "destructive",
         });
       } finally {
         setLoading(false);
@@ -78,25 +78,25 @@ export function EvaluationForm() {
   const form = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationSchema),
     defaultValues: {
-      gradeId: '',
+      gradeId: "",
       teacherIds: [],
       evaluations: {},
     },
   });
 
-  const selectedTeachers = form.watch('teacherIds');
+  const selectedTeachers = form.watch("teacherIds");
 
   useEffect(() => {
     if (state.message) {
       toast({
-        title: state.success ? '✅ ¡Éxito!' : '❌ ¡Error!',
+        title: state.success ? "✅ ¡Éxito!" : "❌ ¡Error!",
         description: state.message,
-        variant: state.success ? 'default' : 'destructive',
-        className: state.success ? 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600' : ''
+        variant: state.success ? "default" : "destructive",
+        className: state.success ? "bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600" : ""
       });
       if(state.success) {
         form.reset();
-        setSelectedGrade('');
+        setSelectedGrade("");
         setAvailableTeachers([]);
       }
     }
@@ -105,17 +105,17 @@ export function EvaluationForm() {
 
   const handleGradeChange = (gradeId: string) => {
     setSelectedGrade(gradeId);
-    form.setValue('gradeId', gradeId);
+    form.setValue("gradeId", gradeId);
     const teachersForGrade = teachers.filter((t) => t.grades.includes(gradeId));
     setAvailableTeachers(teachersForGrade);
-    form.setValue('teacherIds', []);
-    form.setValue('evaluations', {});
+    form.setValue("teacherIds", []);
+    form.setValue("evaluations", {});
   };
 
   const handleFormAction = (formData: FormData) => {
     const values = form.getValues();
-    formData.append('evaluations', JSON.stringify(values.evaluations));
-    formData.append('teacherIds', JSON.stringify(values.teacherIds));
+    formData.append("evaluations", JSON.stringify(values.evaluations));
+    formData.append("teacherIds", JSON.stringify(values.teacherIds));
     formAction(formData);
   }
 
@@ -203,9 +203,9 @@ export function EvaluationForm() {
                                     field.onChange(newValue);
                                     
                                     if (!checked) {
-                                      const currentEvals = form.getValues('evaluations');
+                                      const currentEvals = form.getValues("evaluations");
                                       delete currentEvals[teacher.id];
-                                      form.setValue('evaluations', currentEvals);
+                                      form.setValue("evaluations", currentEvals);
                                     }
                                   }}
                                 />
@@ -290,7 +290,7 @@ export function EvaluationForm() {
                           control={form.control}
                           name={`evaluations.${teacher.id}.feedback`}
                           render={({ field }) => (
-                             <FormItem className="space-y-2 rounded-lg border p-4">
+                            <FormItem className="space-y-2 rounded-lg border p-4">
                               <FormLabel>Retroalimentación Adicional</FormLabel>
                               <FormControl>
                                 <Textarea
@@ -314,7 +314,7 @@ export function EvaluationForm() {
         {selectedTeachers && selectedTeachers.length > 0 && (
           <div className="flex justify-end">
             <Button type="submit" size="lg" disabled={isPending}>
-              {isPending ? 'Enviando...' : 'Enviar Evaluaciones'} <Send className="ml-2 h-5 w-5" />
+              {isPending ? "Enviando..." : "Enviar Evaluaciones"} <Send className="ml-2 h-5 w-5" />
             </Button>
           </div>
         )}

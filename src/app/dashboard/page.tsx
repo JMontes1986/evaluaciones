@@ -1,6 +1,6 @@
-'use client';
-import { DashboardClient } from '@/components/dashboard-client';
-import { AppHeader } from '@/components/header';
+"use client";
+import { DashboardClient } from "@/components/dashboard-client";
+import { AppHeader } from "@/components/header";
 
 export default function DashboardPage() {
   return (

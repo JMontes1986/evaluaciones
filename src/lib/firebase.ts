@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
+// Your web app"s Firebase configuration
 const firebaseConfig = {
   "projectId": "evaluacin-docente",
   "appId": "1:225896137052:web:62d0680e60971d947b0199",

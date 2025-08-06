@@ -1,18 +1,18 @@
-'use client'
+"use client"
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Download, BarChart3, Users, Star, GraduationCap } from 'lucide-react';
-import type { Evaluation, Teacher, Grade } from '@/lib/types';
-import { evaluationQuestions } from '@/lib/types';
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { Skeleton } from './ui/skeleton';
-import { getGrades, getTeachers } from '@/app/actions';
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Download, BarChart3, Users, Star, GraduationCap } from "lucide-react";
+import type { Evaluation, Teacher, Grade } from "@/lib/types";
+import { evaluationQuestions } from "@/lib/types";
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { Skeleton } from "./ui/skeleton";
+import { getGrades, getTeachers } from "@/app/actions";
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -20,8 +20,8 @@ export function DashboardClient() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredData, setFilteredData] = useState<Evaluation[]>([]);
-  const [selectedGrade, setSelectedGrade] = useState('all');
-  const [selectedTeacher, setSelectedTeacher] = useState('all');
+  const [selectedGrade, setSelectedGrade] = useState("all");
+  const [selectedTeacher, setSelectedTeacher] = useState("all");
 
   useEffect(() => {
     const fetchEvaluations = async () => {
@@ -50,10 +50,10 @@ export function DashboardClient() {
 
   const filterData = useCallback(() => {
     let data = evaluations;
-    if (selectedGrade !== 'all') {
+    if (selectedGrade !== "all") {
       data = data.filter(e => e.gradeId === selectedGrade);
     }
-    if (selectedTeacher !== 'all') {
+    if (selectedTeacher !== "all") {
       data = data.filter(e => e.teacherId === selectedTeacher);
     }
     setFilteredData(data);
@@ -107,29 +107,29 @@ export function DashboardClient() {
       const scores = filteredData.map(e => e.scores?.[q.id]).filter(Boolean);
       if (scores.length === 0) return null;
       const average = scores.reduce((a, b) => a + b, 0) / scores.length;
-      return { name: q.text.substring(0, 25) + '...', average: average.toFixed(2) };
+      return { name: q.text.substring(0, 25) + "...", average: average.toFixed(2) };
     }).filter(Boolean);
   }, [filteredData]);
 
 
   const exportToCSV = () => {
-    const headers = ['evaluationId', 'teacherName', 'gradeName', ...evaluationQuestions.map(q => q.text), 'feedback', 'date'];
-    const csvRows = [headers.join(',')];
+    const headers = ["evaluationId", "teacherName", "gradeName", ...evaluationQuestions.map(q => q.text), "feedback", "date"];
+    const csvRows = [headers.join(",")];
     
     filteredData.forEach(e => {
-      const teacherName = teachers.find(t => t.id === e.teacherId)?.name || '';
-      const gradeName = grades.find(g => g.id === e.gradeId)?.name || '';
-      const scores = evaluationQuestions.map(q => e.scores[q.id] || '');
-      const row = [e.id, teacherName, gradeName, ...scores, `"${e.feedback}"`, e.createdAt].join(',');
+      const teacherName = teachers.find(t => t.id === e.teacherId)?.name || "";
+      const gradeName = grades.find(g => g.id === e.gradeId)?.name || "";
+      const scores = evaluationQuestions.map(q => e.scores[q.id] || "");
+      const row = [e.id, teacherName, gradeName, ...scores, `"${e.feedback}"`, e.createdAt].join(",");
       csvRows.push(row);
     });
 
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'gradewise_export.csv');
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "gradewise_export.csv");
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -276,7 +276,7 @@ export function DashboardClient() {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "var(--radius)"
                     }}
-                    cursor={{fill: 'hsl(var(--accent) / 0.3)'}}
+                    cursor={{fill: "hsl(var(--accent) / 0.3)"}}
                   />
                   <Bar dataKey="average" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -302,7 +302,7 @@ export function DashboardClient() {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "var(--radius)"
                     }}
-                    cursor={{fill: 'hsl(var(--accent) / 0.3)'}}
+                    cursor={{fill: "hsl(var(--accent) / 0.3)"}}
                   />
                   <Bar dataKey="average" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -328,7 +328,7 @@ export function DashboardClient() {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "var(--radius)"
                     }}
-                    cursor={{fill: 'hsl(var(--accent) / 0.3)'}}
+                    cursor={{fill: "hsl(var(--accent) / 0.3)"}}
                   />
                   <Bar dataKey="average" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>

@@ -1,20 +1,20 @@
 
-'use client';
+"use client";
 
-import { useFormStatus } from 'react-dom';
-import { Textarea } from './ui/textarea';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { getFeedbackSuggestions } from '@/app/actions';
-import { Sparkles, Lightbulb, Loader2 } from 'lucide-react';
+import { useFormStatus } from "react-dom";
+import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { getFeedbackSuggestions } from "@/app/actions";
+import { Sparkles, Lightbulb, Loader2 } from "lucide-react";
 import type { Control, FieldValues, Path, UseFormGetValues } from "react-hook-form";
-import { FormControl, FormField, FormItem, FormMessage } from './ui/form';
-import { useEffect, useActionState, useState, useTransition } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { useEffect, useActionState, useState, useTransition } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const initialState = {
   success: false,
-  message: '',
+  message: "",
   suggestions: null,
   errors: null,
 };
@@ -67,7 +67,7 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name, getVal
   const handleGetSuggestions = () => {
     const formData = new FormData();
     const evaluationText = getValues(name);
-    formData.append('evaluationText', evaluationText as string);
+    formData.append("evaluationText", evaluationText as string);
     startTransition(() => {
       formAction(formData);
     });

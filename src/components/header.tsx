@@ -1,15 +1,15 @@
-import { BookOpenCheck } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from './ui/button';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { BookOpenCheck } from "lucide-react";
+import Link from "next/link";
+import { Button } from "./ui/button";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function AppHeader() {
   const pathname = usePathname();
 
   const navLinks = [
-    { href: '/evaluation', label: 'Evaluación' },
-    { href: '/dashboard', label: 'Tablero' },
+    { href: "/evaluation", label: "Evaluación" },
+    { href: "/dashboard", label: "Tablero" },
   ];
 
   return (
@@ -25,8 +25,8 @@ export function AppHeader() {
               key={link.href}
               href={link.href}
               className={cn(
-                'transition-colors hover:text-primary',
-                pathname === link.href ? 'text-primary' : 'text-muted-foreground'
+                "transition-colors hover:text-primary",
+                pathname === link.href ? "text-primary" : "text-muted-foreground"
               )}
             >
               {link.label}

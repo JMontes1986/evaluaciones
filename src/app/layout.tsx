@@ -1,10 +1,10 @@
-import type {Metadata} from 'next';
-import './globals.css';
+import type {Metadata} from "next";
+import "./globals.css";
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'GradeWise',
-  description: 'Plataforma de Evaluación de Profesores',
+  title: "GradeWise",
+  description: "Plataforma de Evaluación de Profesores",
 };
 
 export default function RootLayout({
