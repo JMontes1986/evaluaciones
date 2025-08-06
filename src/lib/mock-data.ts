@@ -1,4 +1,5 @@
 import type { Grade, Teacher, Evaluation } from './types';
+import { evaluationQuestions } from './types';
 
 export const grades: Grade[] = [
   { id: 'g1', name: '9º Grado' },
@@ -25,8 +26,8 @@ const generateRandomEvaluations = (): Evaluation[] => {
       for (const teacher of gradeTeachers) {
         if (Math.random() > 0.2) { // not all students evaluate all teachers
           const scores: { [key: string]: number } = {};
-          for (let q = 1; q <= 5; q++) {
-            scores[`q${q}`] = Math.floor(Math.random() * 3) + 3; // Scores between 3 and 5
+          for (const q of evaluationQuestions) {
+            scores[q.id] = Math.floor(Math.random() * 3) + 3; // Scores between 3 and 5
           }
           evaluations.push({
             id: `eval${evalId++}`,

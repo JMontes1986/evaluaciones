@@ -12,8 +12,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { grades, teachers, Evaluation, evaluationQuestions } from '@/lib/mock-data';
-import type { Teacher } from '@/lib/types';
+import { grades, teachers } from '@/lib/mock-data';
+import type { Teacher, Evaluation } from '@/lib/types';
+import { evaluationQuestions } from '@/lib/types';
 import { FeedbackAssistant } from './feedback-assistant';
 import { ArrowRight, Send, User, Book } from 'lucide-react';
 

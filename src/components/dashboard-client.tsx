@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Download, BarChart3, Users, Star, GraduationCap } from 'lucide-react';
 import { evaluations, teachers, grades } from '@/lib/mock-data';
 import type { Evaluation, Teacher, Grade } from '@/lib/types';
-import { evaluationQuestions } from '@/lib/mock-data';
+import { evaluationQuestions } from '@/lib/types';
 
 export function DashboardClient() {
   const [filteredData, setFilteredData] = useState<Evaluation[]>(evaluations);
