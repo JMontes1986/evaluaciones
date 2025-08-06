@@ -3,9 +3,9 @@
 
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
-import type { Evaluation, Grade, Teacher } from "@/lib/types";
+import type { Evaluation, Grade, Teacher, Student } from "@/lib/types";
 import { getFeedbackSuggestions as getFeedbackSuggestionsAI } from "@/ai/flows/feedback-assistant";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -33,13 +33,18 @@ const evaluationSchema = z.object({
   ),
 });
 
-const loginSchema = z.object({
+const adminLoginSchema = z.object({
   username: z.string().min(1, { message: "El usuario es requerido." }),
   password: z.string().min(1, { message: "La contraseña es requerida." }),
 });
 
+const studentLoginSchema = z.object({
+    code: z.string().min(1, { message: "El código es requerido." }),
+});
+
+
 export async function login(prevState: any, formData: FormData) {
-  const validatedFields = loginSchema.safeParse(
+  const validatedFields = adminLoginSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
 
@@ -64,9 +69,44 @@ export async function login(prevState: any, formData: FormData) {
   }
 }
 
+export async function studentLogin(prevState: any, formData: FormData) {
+    const validatedFields = studentLoginSchema.safeParse(
+        Object.fromEntries(formData.entries())
+    );
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: "Por favor, ingresa tu código.",
+        };
+    }
+
+    const { code } = validatedFields.data;
+
+    const studentsCollection = collection(db, "students");
+    const q = query(studentsCollection, where("code", "==", code));
+    const studentSnapshot = await getDocs(q);
+
+    if (studentSnapshot.empty) {
+        return { message: "Código de estudiante no encontrado." };
+    }
+
+    const studentData = studentSnapshot.docs[0].data() as Student;
+    const expires = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
+    cookies().set("student_session", JSON.stringify(studentData), { expires, httpOnly: true });
+    
+    redirect("/evaluation");
+}
+
+
 export async function logout() {
   cookies().set("session", "", { expires: new Date(0) });
   redirect("/login");
+}
+
+export async function studentLogout() {
+  cookies().set("student_session", "", { expires: new Date(0) });
+  redirect("/");
 }
 
 
@@ -78,6 +118,15 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
   };
 
   const validatedFields = evaluationSchema.safeParse(rawData);
+  const studentSession = cookies().get("student_session")?.value;
+
+  if (!studentSession) {
+      return {
+          success: false,
+          message: "No se ha encontrado una sesión de estudiante. Por favor, inicia sesión de nuevo.",
+          errors: null,
+      }
+  }
 
   if (!validatedFields.success) {
     console.error(validatedFields.error.flatten().fieldErrors);
@@ -89,7 +138,8 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
   }
 
   const { gradeId, teacherIds, evaluations } = validatedFields.data;
-  const studentId = `student_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const student = JSON.parse(studentSession);
+
 
   try {
     const batch: Promise<any>[] = [];
@@ -105,7 +155,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
       const docData = {
         gradeId,
         teacherId,
-        studentId,
+        studentId: student.id,
         scores,
         feedback: evaluationData.feedback,
         createdAt: serverTimestamp(),
@@ -138,7 +188,6 @@ export async function getGrades(): Promise<Grade[]> {
     const gradeSnapshot = await getDocs(gradesCollection);
     const gradeList = gradeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grade));
     
-    // Sort numerically based on the grade number
     return gradeList.sort((a, b) => {
         const numA = parseInt(a.name.replace("°", ""));
         const numB = parseInt(b.name.replace("°", ""));
@@ -161,7 +210,6 @@ export async function getEvaluations(): Promise<Evaluation[]> {
       return { 
         id: doc.id, 
         ...data,
-        // Convert Firestore Timestamp to string
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
       } as Evaluation
     });

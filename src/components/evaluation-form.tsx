@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,13 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import type { Teacher, Grade } from "@/lib/types";
+import type { Teacher, Grade, Student } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 import { Send, User } from "lucide-react";
@@ -21,7 +21,7 @@ import { submitEvaluation, getGrades, getTeachers } from "@/app/actions";
 import { Skeleton } from "./ui/skeleton";
 
 const evaluationSchema = z.object({
-  gradeId: z.string().min(1, "Por favor, selecciona un grado."),
+  gradeId: z.string().min(1, "El ID de grado es requerido."),
   teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
   evaluations: z.record(
     z.string(),
@@ -43,15 +43,25 @@ const initialState = {
   errors: null,
 };
 
-export function EvaluationForm() {
+export function EvaluationForm({ student }: { student: Student }) {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
+  const studentGradeName = grades.find(g => g.id === student.gradeId)?.name;
 
+
+  const form = useForm<EvaluationFormData>({
+    resolver: zodResolver(evaluationSchema),
+    defaultValues: {
+      gradeId: student.gradeId,
+      teacherIds: [],
+      evaluations: {},
+    },
+  });
+  
   useEffect(() => {
     async function fetchData() {
       try {
@@ -61,11 +71,16 @@ export function EvaluationForm() {
         ]);
         setGrades(gradesData);
         setTeachers(teachersData);
+        
+        // Filtrar profesores una vez que los datos estén cargados
+        const teachersForGrade = teachersData.filter((t) => t.grades.includes(student.gradeId));
+        setAvailableTeachers(teachersForGrade);
+
       } catch (error) {
         console.error("Error fetching initial data:", error);
         toast({
           title: "❌ ¡Error!",
-          description: "No se pudieron cargar los datos de grados y profesores. Inténtalo de nuevo más tarde.",
+          description: "No se pudieron cargar los datos. Inténtalo de nuevo más tarde.",
           variant: "destructive",
         });
       } finally {
@@ -73,16 +88,7 @@ export function EvaluationForm() {
       }
     }
     fetchData();
-  }, [toast]);
-
-  const form = useForm<EvaluationFormData>({
-    resolver: zodResolver(evaluationSchema),
-    defaultValues: {
-      gradeId: "",
-      teacherIds: [],
-      evaluations: {},
-    },
-  });
+  }, [toast, student.gradeId]);
 
   const selectedTeachers = form.watch("teacherIds");
 
@@ -95,25 +101,18 @@ export function EvaluationForm() {
         className: state.success ? "bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600" : ""
       });
       if(state.success) {
-        form.reset();
-        setSelectedGrade("");
-        setAvailableTeachers([]);
+        form.reset({
+            gradeId: student.gradeId,
+            teacherIds: [],
+            evaluations: {}
+        });
       }
     }
-  }, [state, toast, form]);
-
-
-  const handleGradeChange = (gradeId: string) => {
-    setSelectedGrade(gradeId);
-    form.setValue("gradeId", gradeId);
-    const teachersForGrade = teachers.filter((t) => t.grades.includes(gradeId));
-    setAvailableTeachers(teachersForGrade);
-    form.setValue("teacherIds", []);
-    form.setValue("evaluations", {});
-  };
+  }, [state, toast, form, student.gradeId]);
 
   const handleFormAction = (formData: FormData) => {
     const values = form.getValues();
+    formData.append("gradeId", values.gradeId);
     formData.append("evaluations", JSON.stringify(values.evaluations));
     formData.append("teacherIds", JSON.stringify(values.teacherIds));
     formAction(formData);
@@ -140,43 +139,10 @@ export function EvaluationForm() {
       <form action={handleFormAction} className="space-y-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Paso 1: Selecciona tu Grado</CardTitle>
-            <CardDescription>Esto te mostrará la lista de profesores disponibles para evaluar.</CardDescription>
+            <CardTitle>Hola, {student.name}</CardTitle>
+            <CardDescription>Estás evaluando como estudiante de {studentGradeName || "tu grado"}. Selecciona los profesores para los que deseas dar tu opinión.</CardDescription>
           </CardHeader>
           <CardContent>
-            <FormField
-              control={form.control}
-              name="gradeId"
-              render={({ field }) => (
-                <FormItem>
-                  <Select onValueChange={handleGradeChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona tu grado..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {grades.map((grade) => (
-                        <SelectItem key={grade.id} value={grade.id}>
-                          {grade.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {selectedGrade && availableTeachers.length > 0 && (
-          <Card className="shadow-lg animate-in fade-in-50">
-            <CardHeader>
-              <CardTitle>Paso 2: Elige a los Profesores a Evaluar</CardTitle>
-              <CardDescription>Selecciona los profesores para los que deseas dar tu opinión.</CardDescription>
-            </CardHeader>
-            <CardContent>
                <FormField
                 control={form.control}
                 name="teacherIds"
@@ -219,6 +185,9 @@ export function EvaluationForm() {
                         }}
                       />
                     ))}
+                     {availableTeachers.length === 0 && (
+                        <p className="text-muted-foreground col-span-full">No hay profesores asignados a tu grado actualmente.</p>
+                    )}
                   </FormItem>
                 )}
               />
@@ -230,13 +199,12 @@ export function EvaluationForm() {
                 )}
               />
             </CardContent>
-          </Card>
-        )}
+        </Card>
         
         {selectedTeachers && selectedTeachers.length > 0 && (
           <Card className="shadow-lg animate-in fade-in-50">
             <CardHeader>
-              <CardTitle>Paso 3: Proporciona tu Retroalimentación</CardTitle>
+              <CardTitle>Proporciona tu Retroalimentación</CardTitle>
               <CardDescription>Califica a cada profesor según los siguientes criterios y proporciona comentarios por escrito.</CardDescription>
             </CardHeader>
             <CardContent>

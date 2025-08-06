@@ -3,24 +3,33 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const session = request.cookies.get("session")?.value;
+  const adminSession = request.cookies.get("session")?.value;
+  const studentSession = request.cookies.get("student_session")?.value;
+  const { pathname } = request.nextUrl;
 
-  // Si el usuario no está autenticado y trata de acceder al dashboard,
-  // redirigirlo a la página de login.
-  if (!session && request.nextUrl.pathname.startsWith("/dashboard")) {
+  // Proteger rutas de admin
+  if (!adminSession && pathname.startsWith("/dashboard")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Si el usuario ya está autenticado y trata de acceder a la página de login,
-  // redirigirlo al dashboard.
-  if (session && request.nextUrl.pathname.startsWith("/login")) {
+  if (adminSession && pathname === "/login") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
+
+  // Proteger ruta de evaluación
+  if (!studentSession && pathname.startsWith("/evaluation")) {
+      return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // Si el estudiante ya inició sesión, redirigirlo a la evaluación si intenta ir al login de estudiantes
+  if (studentSession && pathname === "/") {
+     return NextResponse.redirect(new URL("/evaluation", request.url));
+  }
+
 
   return NextResponse.next();
 }
 
-// Configura las rutas que deben ser protegidas por el middleware.
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/login", "/evaluation", "/"],
 };

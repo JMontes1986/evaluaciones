@@ -1,3 +1,4 @@
+
 export interface Teacher {
   id: string;
   name: string;
@@ -10,11 +11,18 @@ export interface Grade {
   name: string;
 }
 
+export interface Student {
+    id: string;
+    name: string;
+    code: string;
+    gradeId: string;
+}
+
 export interface Evaluation {
   id: string;
   teacherId: string;
   gradeId: string;
-  studentId: string; // Anonymized
+  studentId: string; 
   scores: { [questionId: string]: number };
   feedback: string;
   createdAt: string;

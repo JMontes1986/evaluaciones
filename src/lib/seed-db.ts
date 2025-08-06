@@ -1,7 +1,7 @@
 
 import { collection, writeBatch, getDocs, doc } from "firebase/firestore";
 import { db } from "./firebase"; // Asegúrate que la ruta a tu configuración de firebase sea correcta
-import type { Grade, Teacher } from "./types";
+import type { Grade, Teacher, Student } from "./types";
 
 const initialGrades: Grade[] = [
   { id: "g1", name: "3°" },
@@ -19,6 +19,10 @@ const initialTeachers: Omit<Teacher, "id">[] = [
   { name: "Natalia Valencia Benítez", subject: "Ciencias Naturales", grades: ["g1"] },
 ];
 
+const initialStudents: Omit<Student, "id">[] = [
+    { name: "ALZATE CLAVIJO JUAN ALEJANDRO", code: "5566", gradeId: "g1" }
+];
+
 
 async function seedDatabase() {
   console.log("🌱 Empezando a poblar la base de datos...");
@@ -28,7 +32,6 @@ async function seedDatabase() {
     const gradesBatch = writeBatch(db);
     const gradesCollection = collection(db, "grades");
     
-    // Opcional: Borrar datos existentes para evitar duplicados
     const existingGrades = await getDocs(gradesCollection);
     existingGrades.forEach(doc => gradesBatch.delete(doc.ref));
     
@@ -44,7 +47,6 @@ async function seedDatabase() {
     const teachersBatch = writeBatch(db);
     const teachersCollection = collection(db, "teachers");
 
-    // Opcional: Borrar datos existentes
     const existingTeachers = await getDocs(teachersCollection);
     existingTeachers.forEach(doc => teachersBatch.delete(doc.ref));
 
@@ -56,6 +58,23 @@ async function seedDatabase() {
     });
     await teachersBatch.commit();
     console.log("✅ Profesores añadidos con éxito.");
+
+    // Poblar Estudiantes
+    const studentsBatch = writeBatch(db);
+    const studentsCollection = collection(db, "students");
+
+    const existingStudents = await getDocs(studentsCollection);
+    existingStudents.forEach(doc => studentsBatch.delete(doc.ref));
+
+    console.log("👨‍🎓 Añadiendo estudiantes...");
+    initialStudents.forEach((student, index) => {
+        const studentId = `s${index + 1}`;
+        const docRef = doc(studentsCollection, studentId);
+        studentsBatch.set(docRef, { ...student, id: studentId });
+    });
+    await studentsBatch.commit();
+    console.log("✅ Estudiantes añadidos con éxito.");
+
 
     console.log("✨ ¡Base de datos poblada exitosamente!");
 

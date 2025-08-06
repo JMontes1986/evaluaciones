@@ -1,12 +1,13 @@
 
 "use client"
-import { BookOpenCheck } from "lucide-react";
+import { BookOpenCheck, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { studentLogout } from "@/app/actions";
 
-export function AppHeader() {
+export function AppHeader({ studentName }: { studentName?: string}) {
   const pathname = usePathname();
 
   const navLinks = [
@@ -20,27 +21,35 @@ export function AppHeader() {
           <BookOpenCheck className="h-7 w-7 text-primary" />
           <span className="text-xl font-bold font-headline">GradeWise</span>
         </Link>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "transition-colors hover:text-primary",
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        {studentName && (
+            <nav className="flex items-center space-x-6 text-sm font-medium">
+            {navLinks.map((link) => (
+                <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                    "transition-colors hover:text-primary",
+                    pathname === link.href ? "text-primary" : "text-muted-foreground"
+                )}
+                >
+                {link.label}
+                </Link>
+            ))}
+            </nav>
+        )}
         <div className="flex flex-1 items-center justify-end space-x-4">
-           <Button asChild variant="secondary">
-            <Link href="/login">Acceso Admin</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/evaluation">Comenzar Evaluación</Link>
-          </Button>
+           {studentName ? (
+             <form action={studentLogout}>
+                <Button variant="outline" type="submit">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Cerrar Sesión
+                </Button>
+             </form>
+           ) : (
+             <Button asChild variant="secondary">
+                <Link href="/login">Acceso Admin</Link>
+             </Button>
+           )}
         </div>
       </div>
     </header>
