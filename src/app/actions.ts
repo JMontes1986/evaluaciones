@@ -95,6 +95,7 @@ export async function studentLogin(prevState: any, formData: FormData) {
     const expires = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
     cookies().set("student_session", JSON.stringify(studentData), { expires, httpOnly: true });
     
+    revalidatePath("/evaluation");
     redirect("/evaluation");
 }
 
@@ -106,7 +107,8 @@ export async function logout() {
 
 export async function studentLogout() {
   cookies().set("student_session", "", { expires: new Date(0) });
-  redirect("/");
+  revalidatePath("/evaluation");
+  redirect("/evaluation");
 }
 
 
