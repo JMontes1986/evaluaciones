@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import type { Evaluation, Grade, Teacher } from "@/lib/types";
+import { getFeedbackSuggestions as getFeedbackSuggestionsAI } from "@/ai/flows/feedback-assistant";
 
 const evaluationQuestions = [
   { id: "q1", text: "Demuestra un profundo conocimiento de la materia." },
@@ -98,7 +99,13 @@ export async function getGrades(): Promise<Grade[]> {
     const gradesCollection = collection(db, "grades");
     const gradeSnapshot = await getDocs(gradesCollection);
     const gradeList = gradeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grade));
-    return gradeList.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Sort numerically based on the grade number
+    return gradeList.sort((a, b) => {
+        const numA = parseInt(a.name.replace("°", ""));
+        const numB = parseInt(b.name.replace("°", ""));
+        return numA - numB;
+    });
 }
 
 export async function getTeachers(): Promise<Teacher[]> {
@@ -121,4 +128,32 @@ export async function getEvaluations(): Promise<Evaluation[]> {
       } as Evaluation
     });
     return evaluationList;
+}
+
+
+export async function getFeedbackSuggestions(prevState: any, formData: FormData) {
+  const evaluationText = formData.get("evaluationText") as string;
+  if (!evaluationText || evaluationText.trim().length < 10) {
+    return {
+      success: false,
+      message: "Por favor, introduce un texto de evaluación más largo para obtener sugerencias.",
+      suggestions: null,
+    };
+  }
+
+  try {
+    const result = await getFeedbackSuggestionsAI({ evaluationText });
+    return {
+      success: true,
+      message: "Sugerencias generadas con éxito.",
+      suggestions: result.suggestions,
+    };
+  } catch (error) {
+    console.error("Error getting feedback suggestions:", error);
+    return {
+      success: false,
+      message: "No se pudieron generar sugerencias. Inténtalo de nuevo.",
+      suggestions: null,
+    };
+  }
 }
