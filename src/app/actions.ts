@@ -7,7 +7,7 @@ import {
 import { z } from 'zod';
 
 const inputSchema = z.object({
-  evaluationText: z.string().min(10, { message: 'Please provide at least 10 characters of feedback to get suggestions.' }),
+  evaluationText: z.string().min(10, { message: 'Por favor, proporciona al menos 10 caracteres de retroalimentación para obtener sugerencias.' }),
 });
 
 export async function getFeedbackSuggestions(prevState: any, formData: FormData) {
@@ -18,7 +18,7 @@ export async function getFeedbackSuggestions(prevState: any, formData: FormData)
   if (!validatedFields.success) {
     return {
       success: false,
-      message: 'Validation failed',
+      message: 'La validación falló',
       suggestions: null,
       errors: validatedFields.error.flatten().fieldErrors,
     };
@@ -29,22 +29,22 @@ export async function getFeedbackSuggestions(prevState: any, formData: FormData)
     if (!result || !result.suggestions || result.suggestions.length === 0) {
       return {
         success: true,
-        message: 'No suggestions available at the moment. Your feedback looks good!',
-        suggestions: ["Your feedback is clear and concise. No suggestions at this time."],
+        message: 'No hay sugerencias disponibles en este momento. ¡Tu retroalimentación se ve bien!',
+        suggestions: ["Tu retroalimentación es clara y concisa. No hay sugerencias en este momento."],
         errors: null,
       }
     }
     return {
       success: true,
-      message: 'Success',
+      message: 'Éxito',
       suggestions: result.suggestions,
       errors: null,
     }
   } catch (error) {
-    console.error("AI feedback error:", error);
+    console.error("Error en la retroalimentación de la IA:", error);
     return {
       success: false,
-      message: 'An error occurred while getting suggestions. Please try again later.',
+      message: 'Ocurrió un error al obtener sugerencias. Por favor, inténtalo de nuevo más tarde.',
       suggestions: null,
       errors: null,
     }

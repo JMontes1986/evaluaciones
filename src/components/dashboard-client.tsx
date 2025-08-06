@@ -106,29 +106,29 @@ export function DashboardClient() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-                <CardTitle>Filters</CardTitle>
-                <CardDescription>Refine the data shown on the dashboard.</CardDescription>
+                <CardTitle>Filtros</CardTitle>
+                <CardDescription>Refina los datos que se muestran en el tablero.</CardDescription>
             </div>
             <Button onClick={exportToCSV}>
-              <Download className="mr-2 h-4 w-4" /> Export to CSV
+              <Download className="mr-2 h-4 w-4" /> Exportar a CSV
             </Button>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select value={selectedGrade} onValueChange={setSelectedGrade}>
             <SelectTrigger>
-              <SelectValue placeholder="Select Grade" />
+              <SelectValue placeholder="Seleccionar Grado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Grades</SelectItem>
+              <SelectItem value="all">Todos los Grados</SelectItem>
               {grades.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
             <SelectTrigger>
-              <SelectValue placeholder="Select Teacher" />
+              <SelectValue placeholder="Seleccionar Profesor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Teachers</SelectItem>
+              <SelectItem value="all">Todos los Profesores</SelectItem>
               {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -138,57 +138,57 @@ export function DashboardClient() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Evaluations</CardTitle>
+            <CardTitle className="text-sm font-medium">Evaluaciones Totales</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredData.length}</div>
-            <p className="text-xs text-muted-foreground">Across all filters</p>
+            <p className="text-xs text-muted-foreground">En todos los filtros</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overall Average Score</CardTitle>
+            <CardTitle className="text-sm font-medium">Puntuación Media General</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{overallAverage} / 5</div>
-            <p className="text-xs text-muted-foreground">Based on submitted scores</p>
+            <p className="text-xs text-muted-foreground">Basado en las puntuaciones enviadas</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Students Participated</CardTitle>
+            <CardTitle className="text-sm font-medium">Estudiantes que Participaron</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{uniqueStudents}</div>
-            <p className="text-xs text-muted-foreground">Unique student submissions</p>
+            <p className="text-xs text-muted-foreground">Envíos únicos de estudiantes</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Teachers Evaluated</CardTitle>
+            <CardTitle className="text-sm font-medium">Profesores Evaluados</CardTitle>
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{new Set(filteredData.map(e => e.teacherId)).size}</div>
-            <p className="text-xs text-muted-foreground">With at least one evaluation</p>
+            <p className="text-xs text-muted-foreground">Con al menos una evaluación</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="overview">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="by-teacher">By Teacher</TabsTrigger>
-          <TabsTrigger value="by-grade">By Grade</TabsTrigger>
+          <TabsTrigger value="overview">Resumen</TabsTrigger>
+          <TabsTrigger value="by-teacher">Por Profesor</TabsTrigger>
+          <TabsTrigger value="by-grade">Por Grado</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <Card>
             <CardHeader>
-              <CardTitle>Performance by Question</CardTitle>
-              <CardDescription>Average scores for each evaluation criterion.</CardDescription>
+              <CardTitle>Rendimiento por Pregunta</CardTitle>
+              <CardDescription>Puntuaciones medias para cada criterio de evaluación.</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
@@ -213,8 +213,8 @@ export function DashboardClient() {
         <TabsContent value="by-teacher">
           <Card>
             <CardHeader>
-              <CardTitle>Teacher Performance</CardTitle>
-              <CardDescription>Average scores for each teacher.</CardDescription>
+              <CardTitle>Rendimiento del Profesor</CardTitle>
+              <CardDescription>Puntuaciones medias para cada profesor.</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
@@ -239,8 +239,8 @@ export function DashboardClient() {
         <TabsContent value="by-grade">
           <Card>
             <CardHeader>
-              <CardTitle>Grade Performance</CardTitle>
-              <CardDescription>Average scores for each grade level.</CardDescription>
+              <CardTitle>Rendimiento del Grado</CardTitle>
+              <CardDescription>Puntuaciones medias para cada nivel de grado.</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>

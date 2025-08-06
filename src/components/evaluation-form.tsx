@@ -18,16 +18,16 @@ import { FeedbackAssistant } from './feedback-assistant';
 import { ArrowRight, Send, User, Book } from 'lucide-react';
 
 const evaluationSchema = z.object({
-  gradeId: z.string().min(1, 'Please select a grade.'),
-  teacherIds: z.array(z.string()).min(1, 'Please select at least one teacher to evaluate.'),
+  gradeId: z.string().min(1, 'Por favor, selecciona un grado.'),
+  teacherIds: z.array(z.string()).min(1, 'Por favor, selecciona al menos un profesor para evaluar.'),
   evaluations: z.record(
     z.string(),
     z.object({
       ...evaluationQuestions.reduce((acc, q) => {
-        acc[q.id] = z.string().min(1, `Please rate this criterion.`);
+        acc[q.id] = z.string().min(1, `Por favor, califica este criterio.`);
         return acc;
       }, {} as Record<string, z.ZodString>),
-      feedback: z.string().min(1, 'Please provide written feedback.'),
+      feedback: z.string().min(1, 'Por favor, proporciona retroalimentación por escrito.'),
     })
   ),
 });
@@ -62,8 +62,8 @@ export function EvaluationForm() {
   const onSubmit = (data: EvaluationFormData) => {
     console.log(data);
     toast({
-      title: '✅ Evaluation Submitted!',
-      description: 'Thank you for your valuable feedback.',
+      title: '✅ ¡Evaluación Enviada!',
+      description: 'Gracias por tus valiosos comentarios.',
       className: 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600'
     });
     form.reset();
@@ -76,8 +76,8 @@ export function EvaluationForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Step 1: Select Your Grade</CardTitle>
-            <CardDescription>This will show you the list of teachers available for evaluation.</CardDescription>
+            <CardTitle>Paso 1: Selecciona tu Grado</CardTitle>
+            <CardDescription>Esto te mostrará la lista de profesores disponibles para evaluar.</CardDescription>
           </CardHeader>
           <CardContent>
             <FormField
@@ -88,7 +88,7 @@ export function EvaluationForm() {
                   <Select onValueChange={handleGradeChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your grade..." />
+                        <SelectValue placeholder="Selecciona tu grado..." />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -108,8 +108,8 @@ export function EvaluationForm() {
         {selectedGrade && availableTeachers.length > 0 && (
           <Card className="shadow-lg animate-in fade-in-50">
             <CardHeader>
-              <CardTitle>Step 2: Choose Teachers to Evaluate</CardTitle>
-              <CardDescription>Select the teachers you wish to provide feedback for.</CardDescription>
+              <CardTitle>Paso 2: Elige a los Profesores a Evaluar</CardTitle>
+              <CardDescription>Selecciona los profesores para los que deseas dar tu opinión.</CardDescription>
             </CardHeader>
             <CardContent>
                <FormField
@@ -158,8 +158,8 @@ export function EvaluationForm() {
         {selectedTeachers.length > 0 && (
           <Card className="shadow-lg animate-in fade-in-50">
             <CardHeader>
-              <CardTitle>Step 3: Provide Your Feedback</CardTitle>
-              <CardDescription>Rate each teacher on the following criteria and provide written comments.</CardDescription>
+              <CardTitle>Paso 3: Proporciona tu Retroalimentación</CardTitle>
+              <CardDescription>Califica a cada profesor según los siguientes criterios y proporciona comentarios por escrito.</CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full" defaultValue={`item-${selectedTeachers[0]}`}>
@@ -208,8 +208,8 @@ export function EvaluationForm() {
                           />
                         ))}
                         <div className="space-y-2 rounded-lg border p-4">
-                           <FormLabel>Additional Feedback</FormLabel>
-                           <p className="text-sm text-muted-foreground">Use the AI assistant to help make your feedback clearer and more objective.</p>
+                           <FormLabel>Retroalimentación Adicional</FormLabel>
+                           <p className="text-sm text-muted-foreground">Usa el asistente de IA para que tus comentarios sean más claros y objetivos.</p>
                            <FeedbackAssistant control={form.control} name={`evaluations.${teacher.id}.feedback`} />
                         </div>
                       </AccordionContent>
@@ -223,7 +223,7 @@ export function EvaluationForm() {
         {selectedTeachers.length > 0 && (
           <div className="flex justify-end">
             <Button type="submit" size="lg">
-              Submit Evaluations <Send className="ml-2 h-5 w-5" />
+              Enviar Evaluaciones <Send className="ml-2 h-5 w-5" />
             </Button>
           </div>
         )}

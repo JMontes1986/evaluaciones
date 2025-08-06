@@ -8,8 +8,8 @@ export function AppHeader() {
   const pathname = usePathname();
 
   const navLinks = [
-    { href: '/evaluation', label: 'Evaluation' },
-    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/evaluation', label: 'Evaluación' },
+    { href: '/dashboard', label: 'Tablero' },
   ];
 
   return (
@@ -35,7 +35,7 @@ export function AppHeader() {
         </nav>
         <div className="flex flex-1 items-center justify-end">
           <Button asChild>
-            <Link href="/evaluation">Start Evaluation</Link>
+            <Link href="/evaluation">Comenzar Evaluación</Link>
           </Button>
         </div>
       </div>

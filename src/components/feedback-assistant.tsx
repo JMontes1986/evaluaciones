@@ -25,12 +25,12 @@ function SubmitButton() {
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Getting Suggestions...
+          Obteniendo Sugerencias...
         </>
       ) : (
         <>
           <Sparkles className="mr-2 h-4 w-4" />
-          Get AI Suggestions
+          Obtener Sugerencias de IA
         </>
       )}
     </Button>
@@ -50,7 +50,7 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name }: Feed
     if (state.message && !state.success) {
       toast({
         variant: "destructive",
-        title: "Oh no! Something went wrong.",
+        title: "¡Oh no! Algo salió mal.",
         description: state.message,
       })
     }
@@ -66,7 +66,7 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name }: Feed
             <form action={formAction} className="space-y-4">
               <FormControl>
                 <Textarea
-                  placeholder="Provide detailed, constructive feedback here..."
+                  placeholder="Proporciona retroalimentación detallada y constructiva aquí..."
                   className="min-h-[120px] resize-y"
                   {...field}
                   name="evaluationText"
@@ -87,7 +87,7 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name }: Feed
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <Lightbulb className="mr-2 h-5 w-5 text-yellow-400" />
-              Feedback Suggestions
+              Sugerencias de Retroalimentación
             </CardTitle>
           </CardHeader>
           <CardContent>

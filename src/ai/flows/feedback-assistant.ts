@@ -12,14 +12,14 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const FeedbackAssistantInputSchema = z.object({
-  evaluationText: z.string().describe('The current evaluation text provided by the student.'),
+  evaluationText: z.string().describe('El texto de evaluación actual proporcionado por el estudiante.'),
 });
 export type FeedbackAssistantInput = z.infer<typeof FeedbackAssistantInputSchema>;
 
 const FeedbackAssistantOutputSchema = z.object({
   suggestions: z.array(
-    z.string().describe('A list of suggestions to improve the evaluation text.')
-  ).describe('Suggestions to improve the evaluation text for clarity and objectivity.'),
+    z.string().describe('Una lista de sugerencias para mejorar el texto de la evaluación.')
+  ).describe('Sugerencias para mejorar la claridad y objetividad del texto de la evaluación.'),
 });
 export type FeedbackAssistantOutput = z.infer<typeof FeedbackAssistantOutputSchema>;
 
@@ -31,11 +31,11 @@ const feedbackAssistantPrompt = ai.definePrompt({
   name: 'feedbackAssistantPrompt',
   input: {schema: FeedbackAssistantInputSchema},
   output: {schema: FeedbackAssistantOutputSchema},
-  prompt: `You are an AI assistant that helps students provide clear and objective feedback for their teachers. Review the student's current evaluation text and provide a list of suggestions to improve the clarity and objectivity of the feedback. Focus on suggesting specific examples or areas for improvement.
+  prompt: `Eres un asistente de IA que ayuda a los estudiantes a proporcionar comentarios claros y objetivos para sus profesores. Revisa el texto de evaluación actual del estudiante y proporciona una lista de sugerencias para mejorar la claridad y objetividad de los comentarios. Concéntrate en sugerir ejemplos específicos o áreas de mejora.
 
-Evaluation Text: {{{evaluationText}}}
+Texto de Evaluación: {{{evaluationText}}}
 
-Suggestions (as a JSON array of strings):`,
+Sugerencias (como un array JSON de strings):`,
 });
 
 const feedbackAssistantFlow = ai.defineFlow(

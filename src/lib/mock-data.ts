@@ -1,19 +1,19 @@
 import type { Grade, Teacher, Evaluation } from './types';
 
 export const grades: Grade[] = [
-  { id: 'g1', name: '9th Grade' },
-  { id: 'g2', name: '10th Grade' },
-  { id: 'g3', name: '11th Grade' },
-  { id: 'g4', name: '12th Grade' },
+  { id: 'g1', name: '9º Grado' },
+  { id: 'g2', name: '10º Grado' },
+  { id: 'g3', name: '11º Grado' },
+  { id: 'g4', name: '12º Grado' },
 ];
 
 export const teachers: Teacher[] = [
-  { id: 't1', name: 'Dr. Evelyn Reed', subject: 'Physics', grades: ['g3', 'g4'] },
-  { id: 't2', name: 'Mr. Samuel Carter', subject: 'History', grades: ['g1', 'g2'] },
-  { id: 't3', name: 'Ms. Clara Evans', subject: 'Literature', grades: ['g1', 'g3', 'g4'] },
-  { id: 't4', name: 'Mr. Benjamin Hayes', subject: 'Mathematics', grades: ['g1', 'g2', 'g3', 'g4'] },
-  { id: 't5', name: 'Ms. Olivia Chen', subject: 'Chemistry', grades: ['g2', 'g3'] },
-  { id: 't6', name: 'Mr. Leo Rodriguez', subject: 'Physical Education', grades: ['g1', 'g2'] },
+  { id: 't1', name: 'Dra. Evelyn Reed', subject: 'Física', grades: ['g3', 'g4'] },
+  { id: 't2', name: 'Sr. Samuel Carter', subject: 'Historia', grades: ['g1', 'g2'] },
+  { id: 't3', name: 'Sra. Clara Evans', subject: 'Literatura', grades: ['g1', 'g3', 'g4'] },
+  { id: 't4', name: 'Sr. Benjamin Hayes', subject: 'Matemáticas', grades: ['g1', 'g2', 'g3', 'g4'] },
+  { id: 't5', name: 'Sra. Olivia Chen', subject: 'Química', grades: ['g2', 'g3'] },
+  { id: 't6', name: 'Sr. Leo Rodriguez', subject: 'Educación Física', grades: ['g1', 'g2'] },
 ];
 
 const generateRandomEvaluations = (): Evaluation[] => {
@@ -34,7 +34,7 @@ const generateRandomEvaluations = (): Evaluation[] => {
             gradeId: grade.id,
             studentId: `student${i}_${grade.id}`,
             scores,
-            feedback: "Good class, but could be more interactive.",
+            feedback: "Buena clase, pero podría ser más interactiva.",
             createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
           });
         }

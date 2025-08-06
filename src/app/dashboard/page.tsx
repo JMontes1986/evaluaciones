@@ -8,8 +8,8 @@ export default function DashboardPage() {
       <AppHeader />
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-4">
-            <h1 className="text-4xl font-bold font-headline">Results Dashboard</h1>
-            <p className="text-muted-foreground">Aggregated results from student evaluations.</p>
+            <h1 className="text-4xl font-bold font-headline">Tablero de Resultados</h1>
+            <p className="text-muted-foreground">Resultados agregados de las evaluaciones de los estudiantes.</p>
         </div>
         <div className="mt-6">
           <DashboardClient />
