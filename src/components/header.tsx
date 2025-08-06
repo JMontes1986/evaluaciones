@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { studentLogout } from "@/app/actions";
+import Image from "next/image";
 
 export function AppHeader({ studentName }: { studentName?: string}) {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export function AppHeader({ studentName }: { studentName?: string}) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-8 flex items-center gap-2">
-          <BookOpenCheck className="h-7 w-7 text-primary" />
+          <img src="/favicon.ico" alt="ColGemelli Logo" className="h-7 w-7" />
           <span className="text-xl font-bold font-headline">ColGemelli</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
