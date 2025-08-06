@@ -26,65 +26,70 @@ const initialStudents: Omit<Student, "id">[] = [
 
 async function seedDatabase() {
   console.log("🌱 Empezando a poblar la base de datos...");
+  let exitCode = 0;
 
   try {
-    // Poblar Grados
-    const gradesBatch = writeBatch(db);
+    // ---- Poblar Grados ----
     const gradesCollection = collection(db, "grades");
-    
-    const existingGrades = await getDocs(gradesCollection);
+    const gradesBatch = writeBatch(db);
+    console.log("🗑️ Borrando grados existentes...");
+    const existingGrades = await getDocs(query(gradesCollection));
     existingGrades.forEach(doc => gradesBatch.delete(doc.ref));
+    await gradesBatch.commit();
     
+    const newGradesBatch = writeBatch(db);
     console.log("📚 Añadiendo grados...");
     initialGrades.forEach((grade) => {
       const docRef = doc(gradesCollection, grade.id);
-      gradesBatch.set(docRef, grade);
+      newGradesBatch.set(docRef, grade);
     });
-    await gradesBatch.commit();
+    await newGradesBatch.commit();
     console.log("✅ Grados añadidos con éxito.");
 
-    // Poblar Profesores
-    const teachersBatch = writeBatch(db);
+    // ---- Poblar Profesores ----
     const teachersCollection = collection(db, "teachers");
-
-    const existingTeachers = await getDocs(teachersCollection);
+    const teachersBatch = writeBatch(db);
+    console.log("🗑️ Borrando profesores existentes...");
+    const existingTeachers = await getDocs(query(teachersCollection));
     existingTeachers.forEach(doc => teachersBatch.delete(doc.ref));
+    await teachersBatch.commit();
 
+    const newTeachersBatch = writeBatch(db);
     console.log("👩‍🏫 Añadiendo profesores...");
     initialTeachers.forEach((teacher, index) => {
       const teacherId = `t${index + 1}`;
       const docRef = doc(teachersCollection, teacherId);
-      teachersBatch.set(docRef, { ...teacher, id: teacherId });
+      newTeachersBatch.set(docRef, { ...teacher, id: teacherId });
     });
-    await teachersBatch.commit();
+    await newTeachersBatch.commit();
     console.log("✅ Profesores añadidos con éxito.");
 
-    // Poblar Estudiantes
-    const studentsBatch = writeBatch(db);
+    // ---- Poblar Estudiantes ----
     const studentsCollection = collection(db, "students");
-
-    // Borra los estudiantes existentes antes de añadir los nuevos.
-    const studentQuery = query(studentsCollection);
-    const existingStudents = await getDocs(studentQuery);
+    const studentsBatch = writeBatch(db);
+    console.log("🗑️ Borrando estudiantes existentes...");
+    const existingStudents = await getDocs(query(studentsCollection));
     existingStudents.forEach(doc => studentsBatch.delete(doc.ref));
+    await studentsBatch.commit();
 
+    const newStudentsBatch = writeBatch(db);
     console.log("👨‍🎓 Añadiendo estudiantes...");
     initialStudents.forEach((student, index) => {
         const studentId = `s${index + 1}`;
         const docRef = doc(studentsCollection, studentId);
-        studentsBatch.set(docRef, { ...student, id: studentId });
+        newStudentsBatch.set(docRef, { ...student, id: studentId });
     });
-    await studentsBatch.commit();
+    await newStudentsBatch.commit();
     console.log("✅ Estudiantes añadidos con éxito.");
-
 
     console.log("✨ ¡Base de datos poblada exitosamente!");
 
   } catch (error) {
     console.error("❌ Error poblando la base de datos:", error);
+    exitCode = 1;
   } finally {
     // Terminar el proceso
-    process.exit(0);
+    process.exit(exitCode);
   }
 }
 
