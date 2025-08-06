@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: "GradeWise",
+  title: "Evaluación Docente ColGemelli",
   description: "Plataforma de Evaluación de Profesores",
 };
 

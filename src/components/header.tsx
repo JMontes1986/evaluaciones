@@ -20,7 +20,7 @@ export function AppHeader({ studentName }: { studentName?: string}) {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-8 flex items-center gap-2">
           <BookOpenCheck className="h-7 w-7 text-primary" />
-          <span className="text-xl font-bold font-headline">GradeWise</span>
+          <span className="text-xl font-bold font-headline">ColGemelli</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
         {navLinks.map((link) => (
