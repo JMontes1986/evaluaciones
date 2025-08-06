@@ -12,13 +12,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { grades, teachers } from '@/lib/mock-data';
-import type { Teacher } from '@/lib/types';
+import type { Teacher, Grade } from '@/lib/types';
 import { evaluationQuestions } from '@/lib/types';
 import { Textarea } from './ui/textarea';
 import { Send, User } from 'lucide-react';
 import { useActionState } from 'react';
-import { submitEvaluation } from '@/app/actions';
+import { submitEvaluation, getGrades, getTeachers } from '@/app/actions';
+import { Skeleton } from './ui/skeleton';
 
 const evaluationSchema = z.object({
   gradeId: z.string().min(1, 'Por favor, selecciona un grado.'),
@@ -44,10 +44,36 @@ const initialState = {
 };
 
 export function EvaluationForm() {
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedGrade, setSelectedGrade] = useState<string>('');
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
   const { toast } = useToast();
-  const [state, formAction] = useActionState(submitEvaluation, initialState);
+  const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [gradesData, teachersData] = await Promise.all([
+          getGrades(),
+          getTeachers(),
+        ]);
+        setGrades(gradesData);
+        setTeachers(teachersData);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        toast({
+          title: '❌ ¡Error!',
+          description: 'No se pudieron cargar los datos de grados y profesores. Inténtalo de nuevo más tarde.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [toast]);
 
   const form = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationSchema),
@@ -91,6 +117,22 @@ export function EvaluationForm() {
     formData.append('evaluations', JSON.stringify(values.evaluations));
     formData.append('teacherIds', JSON.stringify(values.teacherIds));
     formAction(formData);
+  }
+
+  if (loading) {
+     return (
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-1/2" />
+                    <Skeleton className="h-4 mt-2 w-3/4" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+            </Card>
+        </div>
+     )
   }
 
   return (
@@ -154,8 +196,8 @@ export function EvaluationForm() {
                                   checked={isChecked}
                                   onCheckedChange={(checked) => {
                                     const newValue = checked
-                                      ? [...field.value, teacher.id]
-                                      : field.value?.filter(
+                                      ? [...(field.value || []), teacher.id]
+                                      : (field.value || []).filter(
                                           (value) => value !== teacher.id
                                         );
                                     field.onChange(newValue);
@@ -191,7 +233,7 @@ export function EvaluationForm() {
           </Card>
         )}
         
-        {selectedTeachers.length > 0 && (
+        {selectedTeachers && selectedTeachers.length > 0 && (
           <Card className="shadow-lg animate-in fade-in-50">
             <CardHeader>
               <CardTitle>Paso 3: Proporciona tu Retroalimentación</CardTitle>
@@ -248,7 +290,7 @@ export function EvaluationForm() {
                           control={form.control}
                           name={`evaluations.${teacher.id}.feedback`}
                           render={({ field }) => (
-                            <FormItem className="space-y-2 rounded-lg border p-4">
+                             <FormItem className="space-y-2 rounded-lg border p-4">
                               <FormLabel>Retroalimentación Adicional</FormLabel>
                               <FormControl>
                                 <Textarea
@@ -269,10 +311,10 @@ export function EvaluationForm() {
           </Card>
         )}
 
-        {selectedTeachers.length > 0 && (
+        {selectedTeachers && selectedTeachers.length > 0 && (
           <div className="flex justify-end">
-            <Button type="submit" size="lg">
-              Enviar Evaluaciones <Send className="ml-2 h-5 w-5" />
+            <Button type="submit" size="lg" disabled={isPending}>
+              {isPending ? 'Enviando...' : 'Enviar Evaluaciones'} <Send className="ml-2 h-5 w-5" />
             </Button>
           </div>
         )}

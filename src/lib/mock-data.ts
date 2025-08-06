@@ -1,6 +1,9 @@
 import type { Grade, Teacher } from './types';
 
-export const grades: Grade[] = [
+// This file is now deprecated for grades and teachers, as they are fetched from Firestore.
+// It can be removed or kept for reference.
+
+export const initialGrades: Grade[] = [
   { id: 'g1', name: '3°' },
   { id: 'g2', name: '4°' },
   { id: 'g3', name: '5°' },
@@ -12,7 +15,7 @@ export const grades: Grade[] = [
   { id: 'g9', name: '11°' },
 ];
 
-export const teachers: Teacher[] = [
+export const initialTeachers: Teacher[] = [
   { id: 't1', name: 'Dra. Evelyn Reed', subject: 'Física', grades: ['g7', 'g8', 'g9'] },
   { id: 't2', name: 'Sr. Samuel Carter', subject: 'Historia', grades: ['g5', 'g6', 'g7'] },
   { id: 't3', name: 'Sra. Clara Evans', subject: 'Literatura', grades: ['g1', 'g2', 'g3', 'g4'] },

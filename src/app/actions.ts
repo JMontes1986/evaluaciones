@@ -2,9 +2,10 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { getFeedbackSuggestions as getFeedbackSuggestionsFlow, type FeedbackAssistantInput } from '@/ai/flows/feedback-assistant';
+import type { Grade, Teacher } from '@/lib/types';
 
 const evaluationQuestions = [
   { id: 'q1', text: 'Demuestra un profundo conocimiento de la materia.' },
@@ -136,4 +137,19 @@ export async function getFeedbackSuggestions(prevState: any, formData: FormData)
       errors: null,
     }
   }
+}
+
+
+export async function getGrades(): Promise<Grade[]> {
+    const gradesCollection = collection(db, 'grades');
+    const gradeSnapshot = await getDocs(gradesCollection);
+    const gradeList = gradeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grade));
+    return gradeList.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function getTeachers(): Promise<Teacher[]> {
+    const teachersCollection = collection(db, 'teachers');
+    const teacherSnapshot = await getDocs(teachersCollection);
+    const teacherList = teacherSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher));
+    return teacherList;
 }

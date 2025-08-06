@@ -7,15 +7,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Download, BarChart3, Users, Star, GraduationCap } from 'lucide-react';
-import { teachers, grades } from '@/lib/mock-data';
 import type { Evaluation, Teacher, Grade } from '@/lib/types';
 import { evaluationQuestions } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
+import { getGrades, getTeachers } from '@/app/actions';
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredData, setFilteredData] = useState<Evaluation[]>([]);
   const [selectedGrade, setSelectedGrade] = useState('all');
@@ -24,12 +26,20 @@ export function DashboardClient() {
   useEffect(() => {
     const fetchEvaluations = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "evaluations"));
-        const evals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Evaluation));
+        const [evalsSnapshot, gradesData, teachersData] = await Promise.all([
+            getDocs(collection(db, "evaluations")),
+            getGrades(),
+            getTeachers()
+        ]);
+        
+        const evals = evalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Evaluation));
         setEvaluations(evals);
         setFilteredData(evals);
+        setGrades(gradesData);
+        setTeachers(teachersData);
+
       } catch (error) {
-        console.error("Error fetching evaluations: ", error);
+        console.error("Error fetching data: ", error);
       } finally {
         setLoading(false);
       }
@@ -78,7 +88,7 @@ export function DashboardClient() {
       }
     }).filter(Boolean);
     return teacherData.sort((a,b) => Number(b.average) - Number(a.average));
-  }, [filteredData]);
+  }, [filteredData, teachers]);
 
   const gradeAverages = useMemo(() => {
     return grades.map(grade => {
@@ -90,7 +100,7 @@ export function DashboardClient() {
         evaluations: gradeEvals.length
       }
     }).filter(Boolean);
-  }, [filteredData]);
+  }, [filteredData, grades]);
   
   const questionAverages = useMemo(() => {
     return evaluationQuestions.map(q => {
