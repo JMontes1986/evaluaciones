@@ -186,6 +186,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     await Promise.all(batch);
 
     revalidatePath("/dashboard");
+    revalidatePath("/evaluation");
 
     return {
       success: true,
@@ -232,6 +233,21 @@ export async function getEvaluations(): Promise<Evaluation[]> {
         ...data,
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
       } as Evaluation
+    });
+    return evaluationList;
+}
+
+export async function getEvaluationsByStudent(studentId: string): Promise<Evaluation[]> {
+    const evaluationsCollection = collection(db, "evaluations");
+    const q = query(evaluationsCollection, where("studentId", "==", studentId));
+    const evaluationSnapshot = await getDocs(q);
+    const evaluationList = evaluationSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id, 
+            ...data,
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+        } as Evaluation
     });
     return evaluationList;
 }

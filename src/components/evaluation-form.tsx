@@ -12,12 +12,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import type { Teacher, Grade, Student } from "@/lib/types";
+import type { Teacher, Grade, Student, Evaluation } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 import { Send, User } from "lucide-react";
 import { useActionState } from "react";
-import { submitEvaluation, getGrades, getTeachers } from "@/app/actions";
+import { submitEvaluation, getGrades, getTeachers, getEvaluationsByStudent } from "@/app/actions";
 import { Skeleton } from "./ui/skeleton";
 import { FeedbackAssistant } from "./feedback-assistant";
 
@@ -77,14 +77,19 @@ export function EvaluationForm({ student }: { student: Student }) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [gradesData, teachersData] = await Promise.all([
+        const [gradesData, teachersData, pastEvaluations] = await Promise.all([
           getGrades(),
           getTeachers(),
+          getEvaluationsByStudent(student.id),
         ]);
         setGrades(gradesData);
         setTeachers(teachersData);
+
+        const evaluatedTeacherIds = new Set(pastEvaluations.map(e => e.teacherId));
         
-        const teachersForGrade = teachersData.filter((t) => t.grades.includes(student.gradeId));
+        const teachersForGrade = teachersData.filter((t) => 
+            t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
+        );
         setAvailableTeachers(teachersForGrade);
 
       } catch (error) {
@@ -99,7 +104,7 @@ export function EvaluationForm({ student }: { student: Student }) {
       }
     }
     fetchData();
-  }, [toast, student.gradeId]);
+  }, [toast, student.gradeId, student.id, state.success]); // Re-fetch data on successful submission
 
   const selectedTeachers = form.watch("teacherIds");
 
@@ -197,7 +202,7 @@ export function EvaluationForm({ student }: { student: Student }) {
                       />
                     ))}
                      {availableTeachers.length === 0 && (
-                        <p className="text-muted-foreground col-span-full">No hay profesores asignados a tu grado actualmente.</p>
+                        <p className="text-muted-foreground col-span-full">¡Felicitaciones! Ya has evaluado a todos los profesores disponibles para tu grado.</p>
                     )}
                   </FormItem>
                 )}
