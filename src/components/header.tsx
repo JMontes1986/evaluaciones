@@ -20,7 +20,7 @@ export function AppHeader({ studentName }: { studentName?: string}) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-8 flex items-center gap-2">
-          <img src="/logo.png" alt="ColGemelli Logo" className="h-7 w-7" />
+          <img src="/recurso 11.png" alt="ColGemelli Logo" className="h-7 w-7" />
           <span className="text-xl font-bold font-headline">ColGemelli</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
