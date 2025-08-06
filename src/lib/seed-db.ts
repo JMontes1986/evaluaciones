@@ -22,6 +22,7 @@ const initialTeachers: Omit<Teacher, "id">[] = [
   { name: "Sr. Benjamin Hayes", subject: "Matemáticas", grades: ["g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9"] },
   { name: "Sra. Olivia Chen", subject: "Química", grades: ["g8", "g9"] },
   { name: "Sr. Leo Rodriguez", subject: "Educación Física", grades: ["g1", "g2", "g3", "g4", "g5", "g6"] },
+  { name: "Natalia Valencia Benítez", subject: "Ciencias Naturales", grades: ["g1"] },
 ];
 
 
