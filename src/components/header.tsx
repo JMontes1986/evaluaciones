@@ -1,3 +1,5 @@
+
+"use client"
 import { BookOpenCheck } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -9,7 +11,6 @@ export function AppHeader() {
 
   const navLinks = [
     { href: "/evaluation", label: "Evaluación" },
-    { href: "/dashboard", label: "Tablero" },
   ];
 
   return (
@@ -33,7 +34,10 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
-        <div className="flex flex-1 items-center justify-end">
+        <div className="flex flex-1 items-center justify-end space-x-4">
+           <Button asChild variant="secondary">
+            <Link href="/login">Acceso Admin</Link>
+          </Button>
           <Button asChild>
             <Link href="/evaluation">Comenzar Evaluación</Link>
           </Button>

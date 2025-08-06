@@ -1,48 +1,37 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpenCheck, Bot, BarChart3, Download, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BookOpenCheck, Bot, BarChart3, Download, ArrowRight, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { AppHeader } from "@/components/header";
 
 export default function Home() {
   const features = [
     {
       icon: <BookOpenCheck className="h-10 w-10 text-primary" />,
-      title: 'Evaluaciones Dinámicas',
-      description: 'Interactúa con formularios adaptados a tu grado y materias.',
+      title: "Evaluaciones Dinámicas",
+      description: "Interactúa con formularios adaptados a tu grado y materias.",
     },
     {
       icon: <Bot className="h-10 w-10 text-primary" />,
-      title: 'Feedback con IA',
-      description: 'Recibe sugerencias inteligentes para que tus comentarios sean más constructivos y claros.',
+      title: "Feedback con IA",
+      description: "Recibe sugerencias inteligentes para que tus comentarios sean más constructivos y claros.",
     },
     {
       icon: <BarChart3 className="h-10 w-10 text-primary" />,
-      title: 'Paneles en Tiempo Real',
-      description: 'Visualiza los resultados de las evaluaciones con gráficos intuitivos y datos agregados.',
+      title: "Paneles en Tiempo Real",
+      description: "Visualiza los resultados de las evaluaciones con gráficos intuitivos y datos agregados.",
     },
     {
-      icon: <Download className="h-10 w-10 text-primary" />,
-      title: 'Exportación Fácil de Datos',
-      description: 'Exporta informes completos en formatos comunes para análisis y registros.',
+      icon: <ShieldCheck className="h-10 w-10 text-primary" />,
+      title: "Acceso Seguro",
+      description: "El panel de resultados está protegido para garantizar la privacidad de los datos.",
     },
   ];
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BookOpenCheck className="h-8 w-8 text-primary" />
-          <h1 className="text-2xl font-bold font-headline">GradeWise</h1>
-        </div>
-        <nav className="flex items-center gap-4">
-          <Button variant="ghost" asChild>
-            <Link href="/dashboard">Tablero</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/evaluation">Comenzar Evaluación</Link>
-          </Button>
-        </nav>
-      </header>
+      <AppHeader />
       
       <main className="flex-grow">
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center py-20 sm:py-32">
@@ -62,7 +51,7 @@ export default function Home() {
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/dashboard">Ver Tablero</Link>
+              <Link href="/login">Ir al Tablero</Link>
             </Button>
           </div>
         </section>

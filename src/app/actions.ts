@@ -7,6 +7,8 @@ import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore
 import { revalidatePath } from "next/cache";
 import type { Evaluation, Grade, Teacher } from "@/lib/types";
 import { getFeedbackSuggestions as getFeedbackSuggestionsAI } from "@/ai/flows/feedback-assistant";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const evaluationQuestions = [
   { id: "q1", text: "Demuestra un profundo conocimiento de la materia." },
@@ -30,6 +32,42 @@ const evaluationSchema = z.object({
     })
   ),
 });
+
+const loginSchema = z.object({
+  username: z.string().min(1, { message: "El usuario es requerido." }),
+  password: z.string().min(1, { message: "La contraseña es requerida." }),
+});
+
+export async function login(prevState: any, formData: FormData) {
+  const validatedFields = loginSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Por favor, completa ambos campos.",
+    };
+  }
+
+  const { username, password } = validatedFields.data;
+
+  // WARNING: Hardcoded credentials. In a real-world scenario, use a secure authentication provider.
+  if (username === "administrador" && password === "G3m3ll1.2022*") {
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    cookies().set("session", "admin_logged_in", { expires, httpOnly: true });
+    return redirect("/dashboard");
+  } else {
+    return {
+      message: "Usuario o contraseña incorrectos.",
+    };
+  }
+}
+
+export async function logout() {
+  cookies().set("session", "", { expires: new Date(0) });
+  redirect("/login");
+}
 
 
 export async function submitEvaluation(prevState: any, formData: FormData) {
