@@ -16,12 +16,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Proteger ruta de evaluación
+  // Proteger ruta de evaluación: si no hay sesión de estudiante, redirigir a la página de inicio
   if (!studentSession && pathname.startsWith("/evaluation")) {
       return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Si el estudiante ya inició sesión, redirigirlo a la evaluación si intenta ir al login de estudiantes
+  // Si el estudiante ya inició sesión y está en la página de inicio, redirigirlo a la evaluación
   if (studentSession && pathname === "/") {
      return NextResponse.redirect(new URL("/evaluation", request.url));
   }
