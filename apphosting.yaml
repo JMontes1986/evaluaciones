@@ -5,3 +5,9 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+  # You can specify secrets that will be available as environment variables.
+  # You can create and manage secrets with the Firebase CLI:
+  # `firebase apphosting:secrets:set <secret_name>`
+  # https://firebase.google.com/docs/app-hosting/configure#manage-secrets
+  secrets:
+    - GEMINI_API_KEY
