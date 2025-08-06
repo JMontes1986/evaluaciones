@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { grades, teachers } from '@/lib/mock-data';
 import type { Teacher, Evaluation } from '@/lib/types';
 import { evaluationQuestions } from '@/lib/types';
-import { FeedbackAssistant } from './feedback-assistant';
+import { Textarea } from './ui/textarea';
 import { ArrowRight, Send, User, Book } from 'lucide-react';
 
 const evaluationSchema = z.object({
@@ -208,15 +208,22 @@ export function EvaluationForm() {
                             )}
                           />
                         ))}
-                        <div className="space-y-2 rounded-lg border p-4">
-                           <FormLabel>Retroalimentación Adicional</FormLabel>
-                           <p className="text-sm text-muted-foreground">Usa el asistente de IA para que tus comentarios sean más claros y objetivos.</p>
-                           <FeedbackAssistant 
-                            control={form.control} 
-                            name={`evaluations.${teacher.id}.feedback`} 
-                            getValues={form.getValues}
-                          />
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`evaluations.${teacher.id}.feedback`}
+                          render={({ field }) => (
+                            <FormItem className="space-y-2 rounded-lg border p-4">
+                              <FormLabel>Retroalimentación Adicional</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Proporciona retroalimentación detallada y constructiva aquí..."
+                                  className="min-h-[120px] resize-y"
+                                  {...field}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
                       </AccordionContent>
                     </AccordionItem>
                   ))}
