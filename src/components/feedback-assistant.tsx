@@ -7,9 +7,9 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { getFeedbackSuggestions } from '@/app/actions';
 import { Sparkles, Lightbulb, Loader2 } from 'lucide-react';
-import type { Control, FieldValues, Path } from "react-hook-form";
+import type { Control, FieldValues, Path, UseFormGetValues } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form';
-import { useEffect, useActionState } from 'react';
+import { useEffect, useActionState, useState, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const initialState = {
@@ -20,9 +20,14 @@ const initialState = {
 };
 
 function SubmitButton() {
+  const [isPending, startTransition] = useTransition();
   const { pending } = useFormStatus();
+
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="button" formAction={
+      // @ts-ignore
+      (formData) => startTransition(() => getFeedbackSuggestions(null, formData))
+    } disabled={pending}>
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -41,10 +46,12 @@ function SubmitButton() {
 interface FeedbackAssistantProps<T extends FieldValues> {
     control: Control<T>;
     name: Path<T>;
+    getValues: UseFormGetValues<T>;
 }
 
-export function FeedbackAssistant<T extends FieldValues>({ control, name }: FeedbackAssistantProps<T>) {
+export function FeedbackAssistant<T extends FieldValues>({ control, name, getValues }: FeedbackAssistantProps<T>) {
   const [state, formAction] = useActionState(getFeedbackSuggestions, initialState);
+  const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,6 +63,15 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name }: Feed
       })
     }
   }, [state, toast])
+  
+  const handleGetSuggestions = () => {
+    const formData = new FormData();
+    const evaluationText = getValues(name);
+    formData.append('evaluationText', evaluationText as string);
+    startTransition(() => {
+      formAction(formData);
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -64,7 +80,7 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name }: Feed
         name={name}
         render={({ field }) => (
           <FormItem>
-            <form action={formAction} className="space-y-4">
+            <div className="space-y-4">
               <FormControl>
                 <Textarea
                   placeholder="Proporciona retroalimentación detallada y constructiva aquí..."
@@ -76,9 +92,21 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name }: Feed
                <FormMessage/>
 
               <div className="flex justify-end">
-                <SubmitButton />
+                 <Button type="button" onClick={handleGetSuggestions} disabled={isPending}>
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Obteniendo Sugerencias...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Obtener Sugerencias de IA
+                    </>
+                  )}
+                </Button>
               </div>
-            </form>
+            </div>
           </FormItem>
         )}
       />

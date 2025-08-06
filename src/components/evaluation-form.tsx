@@ -211,7 +211,11 @@ export function EvaluationForm() {
                         <div className="space-y-2 rounded-lg border p-4">
                            <FormLabel>Retroalimentación Adicional</FormLabel>
                            <p className="text-sm text-muted-foreground">Usa el asistente de IA para que tus comentarios sean más claros y objetivos.</p>
-                           <FeedbackAssistant control={form.control} name={`evaluations.${teacher.id}.feedback`} />
+                           <FeedbackAssistant 
+                            control={form.control} 
+                            name={`evaluations.${teacher.id}.feedback`} 
+                            getValues={form.getValues}
+                          />
                         </div>
                       </AccordionContent>
                     </AccordionItem>
