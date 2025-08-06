@@ -62,7 +62,7 @@ export function FeedbackAssistant<T extends FieldValues>({ control, name, getVal
             <div className="space-y-2">
               <FormControl>
                 <Textarea
-                  placeholder="Proporciona retroalimentación detallada y constructiva aquí..."
+                  placeholder="Proporciona observaciones detalladas y constructivas aquí..."
                   className="min-h-[120px] resize-y"
                   {...field}
                 />

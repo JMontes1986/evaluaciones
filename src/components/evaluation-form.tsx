@@ -31,7 +31,7 @@ const evaluationSchema = z.object({
         acc[q.id] = z.string().min(1, `Por favor, califica este criterio.`);
         return acc;
       }, {} as Record<string, z.ZodString>),
-      feedback: z.string().min(1, "Por favor, proporciona retroalimentación por escrito."),
+      feedback: z.string().optional(),
     })
   ),
 });
@@ -60,6 +60,7 @@ export function EvaluationForm({ student }: { student: Student }) {
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
   
   const studentGradeName = useMemo(() => {
+    if (!grades || grades.length === 0) return "";
     return grades.find(g => g.id === student.gradeId)?.name;
   }, [grades, student.gradeId]);
 
@@ -269,7 +270,7 @@ export function EvaluationForm({ student }: { student: Student }) {
                           name={`evaluations.${teacher.id}.feedback`}
                           render={({ field }) => (
                             <FormItem className="space-y-2 rounded-lg border p-4">
-                              <FormLabel>Retroalimentación Adicional</FormLabel>
+                              <FormLabel>Observaciones (Opcional)</FormLabel>
                                 <FeedbackAssistant
                                     control={form.control}
                                     name={`evaluations.${teacher.id}.feedback`}
