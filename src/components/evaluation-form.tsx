@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,6 +19,7 @@ import { Send, User } from "lucide-react";
 import { useActionState } from "react";
 import { submitEvaluation, getGrades, getTeachers } from "@/app/actions";
 import { Skeleton } from "./ui/skeleton";
+import { FeedbackAssistant } from "./feedback-assistant";
 
 const evaluationSchema = z.object({
   gradeId: z.string().min(1, "El ID de grado es requerido."),
@@ -50,7 +51,10 @@ export function EvaluationForm({ student }: { student: Student }) {
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
-  const studentGradeName = grades.find(g => g.id === student.gradeId)?.name;
+  
+  const studentGradeName = useMemo(() => {
+    return grades.find(g => g.id === student.gradeId)?.name;
+  }, [grades, student.gradeId]);
 
 
   const form = useForm<EvaluationFormData>({
@@ -72,7 +76,6 @@ export function EvaluationForm({ student }: { student: Student }) {
         setGrades(gradesData);
         setTeachers(teachersData);
         
-        // Filtrar profesores una vez que los datos estén cargados
         const teachersForGrade = teachersData.filter((t) => t.grades.includes(student.gradeId));
         setAvailableTeachers(teachersForGrade);
 
@@ -260,13 +263,12 @@ export function EvaluationForm({ student }: { student: Student }) {
                           render={({ field }) => (
                             <FormItem className="space-y-2 rounded-lg border p-4">
                               <FormLabel>Retroalimentación Adicional</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Proporciona retroalimentación detallada y constructiva aquí..."
-                                  className="min-h-[120px] resize-y"
-                                  {...field}
+                                <FeedbackAssistant
+                                    control={form.control}
+                                    name={`evaluations.${teacher.id}.feedback`}
+                                    getValues={form.getValues}
+                                    setValue={form.setValue}
                                 />
-                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
