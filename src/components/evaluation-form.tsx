@@ -44,6 +44,13 @@ const initialState = {
   errors: null,
 };
 
+const ratingOptions = [
+    { value: "4", label: "SIEMPRE" },
+    { value: "3", label: "CASI SIEMPRE" },
+    { value: "2", label: "ALGUNAS VECES" },
+    { value: "1", label: "NUNCA" },
+];
+
 export function EvaluationForm({ student }: { student: Student }) {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -240,14 +247,14 @@ export function EvaluationForm({ student }: { student: Student }) {
                                   <RadioGroup
                                     onValueChange={field.onChange}
                                     defaultValue={field.value}
-                                    className="flex items-center space-x-4"
+                                    className="flex flex-wrap items-center gap-x-6 gap-y-2"
                                   >
-                                    {[1, 2, 3, 4, 5].map((val) => (
-                                      <FormItem key={val} className="flex items-center space-x-2 space-y-0">
+                                    {ratingOptions.map((option) => (
+                                      <FormItem key={option.value} className="flex items-center space-x-2 space-y-0">
                                         <FormControl>
-                                          <RadioGroupItem value={String(val)} />
+                                          <RadioGroupItem value={option.value} />
                                         </FormControl>
-                                        <FormLabel className="font-normal">{val}</FormLabel>
+                                        <FormLabel className="font-normal">{option.label}</FormLabel>
                                       </FormItem>
                                     ))}
                                   </RadioGroup>

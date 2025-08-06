@@ -69,10 +69,10 @@ export function DashboardClient() {
       if (scores.length === 0) return acc;
       return acc + scores.reduce((sAcc, sCurr) => sAcc + sCurr, 0) / scores.length;
     }, 0);
-    return (totalScore / evals.length).toFixed(2);
+    return (totalScore / evals.length);
   };
   
-  const overallAverage = useMemo(() => getAverageScore(filteredData), [filteredData]);
+  const overallAverage = useMemo(() => getAverageScore(filteredData).toFixed(2), [filteredData]);
   const uniqueStudents = useMemo(() => new Set(filteredData.map(e => e.studentId)).size, [filteredData]);
 
   const teacherAverages = useMemo(() => {
@@ -81,7 +81,7 @@ export function DashboardClient() {
       if (teacherEvals.length === 0) return null;
       return {
         name: teacher.name,
-        average: getAverageScore(teacherEvals),
+        average: getAverageScore(teacherEvals).toFixed(2),
         evaluations: teacherEvals.length
       }
     }).filter(Boolean);
@@ -94,7 +94,7 @@ export function DashboardClient() {
        if (gradeEvals.length === 0) return null;
       return {
         name: grade.name,
-        average: getAverageScore(gradeEvals),
+        average: getAverageScore(gradeEvals).toFixed(2),
         evaluations: gradeEvals.length
       }
     }).filter(Boolean);
@@ -224,7 +224,7 @@ export function DashboardClient() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{overallAverage} / 5</div>
+            <div className="text-2xl font-bold">{overallAverage} / 4</div>
             <p className="text-xs text-muted-foreground">Basado en las puntuaciones enviadas</p>
           </CardContent>
         </Card>
@@ -267,7 +267,7 @@ export function DashboardClient() {
                 <BarChart data={questionAverages}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 5]} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 4]} />
                   <Tooltip
                     contentStyle={{ 
                       background: "hsl(var(--background))", 
@@ -293,7 +293,7 @@ export function DashboardClient() {
                 <BarChart data={teacherAverages}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 5]}/>
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 4]}/>
                   <Tooltip
                      contentStyle={{ 
                       background: "hsl(var(--background))", 
@@ -319,7 +319,7 @@ export function DashboardClient() {
                 <BarChart data={gradeAverages}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 5]}/>
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 4]}/>
                   <Tooltip
                     contentStyle={{ 
                       background: "hsl(var(--background))", 
