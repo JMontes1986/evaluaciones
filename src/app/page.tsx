@@ -55,7 +55,7 @@ export default function HomePage() {
                             <MessageSquareHeart className="h-8 w-8 text-primary mt-1"/>
                             <div>
                                 <h3 className="font-semibold">Sugerencias con IA</h3>
-                                <p className="text-sm text-muted-foreground">Ayuda a los estudiantes a formular una retroalimentación más clara y constructiva.</p>
+                                <p className="text-sm text-muted-foreground">Ayuda a la institución a formular mejor las preguntas y los resultados por docentes de manera clara y constructiva.</p>
                             </div>
                         </div>
                     </CardContent>
