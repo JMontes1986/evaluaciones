@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -8,7 +9,7 @@ import { getFeedbackSuggestions } from '@/app/actions';
 import { Sparkles, Lightbulb, Loader2 } from 'lucide-react';
 import type { Control, FieldValues, Path } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormMessage } from './ui/form';
-import { useEffect } from 'react';
+import { useEffect, useActionState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const initialState = {
@@ -43,7 +44,7 @@ interface FeedbackAssistantProps<T extends FieldValues> {
 }
 
 export function FeedbackAssistant<T extends FieldValues>({ control, name }: FeedbackAssistantProps<T>) {
-  const [state, formAction] = useFormState(getFeedbackSuggestions, initialState);
+  const [state, formAction] = useActionState(getFeedbackSuggestions, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
