@@ -2,8 +2,8 @@
 "use server";
 
 import { z } from "zod";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, getDocs, query, where, collectionGroup, getDoc, doc } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase/admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import type { Evaluation, Grade, Teacher, Student } from "@/lib/types";
 import { getFeedbackSuggestions as getFeedbackSuggestionsAI } from "@/ai/flows/feedback-assistant";
@@ -76,9 +76,9 @@ export async function studentLogin(prevState: any, formData: FormData) {
 
     const { code } = validatedFields.data;
 
-    const studentsCollection = collection(db, "students");
-    const q = query(studentsCollection, where("code", "==", code));
-    const studentSnapshot = await getDocs(q);
+    const studentsCollection = adminDb.collection("students");
+    const q = studentsCollection.where("code", "==", code);
+    const studentSnapshot = await q.get();
 
     if (studentSnapshot.empty) {
         return { message: "Código de estudiante no encontrado." };
@@ -138,7 +138,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
   const { teacherIds, evaluations } = validatedFields.data;
 
   try {
-    const batch: Promise<any>[] = [];
+    const batch = adminDb.batch();
     Object.entries(evaluations).forEach(([teacherId, evaluationData]) => {
       if (!teacherIds.includes(teacherId)) return;
 
@@ -148,20 +148,22 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
           .map(([key, value]) => [key, Number(value)])
       );
 
+      const evaluationCollectionRef = adminDb.collection("students").doc(student.id).collection("evaluations");
+      const newEvalRef = evaluationCollectionRef.doc();
+
       const docData = {
         gradeId: student.gradeId,
         teacherId,
         studentId: student.id,
         scores,
         feedback: evaluationData.feedback || "",
-        createdAt: serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       };
       
-      const evaluationCollectionRef = collection(db, "students", student.id, "evaluations");
-      batch.push(addDoc(evaluationCollectionRef, docData));
+      batch.set(newEvalRef, docData);
     });
 
-    await Promise.all(batch);
+    await batch.commit();
 
     revalidatePath("/dashboard");
     revalidatePath("/evaluation");
@@ -183,8 +185,8 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
 }
 
 export async function getGrades(): Promise<Grade[]> {
-    const gradesCollection = collection(db, "grades");
-    const gradeSnapshot = await getDocs(gradesCollection);
+    const gradesCollection = adminDb.collection("grades");
+    const gradeSnapshot = await gradesCollection.get();
     const gradeList = gradeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grade));
     
     return gradeList.sort((a, b) => {
@@ -195,15 +197,15 @@ export async function getGrades(): Promise<Grade[]> {
 }
 
 export async function getTeachers(): Promise<Teacher[]> {
-    const teachersCollection = collection(db, "teachers");
-    const teacherSnapshot = await getDocs(teachersCollection);
+    const teachersCollection = adminDb.collection("teachers");
+    const teacherSnapshot = await teachersCollection.get();
     const teacherList = teacherSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher));
     return teacherList;
 }
 
 export async function getStudents(): Promise<Student[]> {
-  const studentsCollection = collection(db, "students");
-  const studentSnapshot = await getDocs(studentsCollection);
+  const studentsCollection = adminDb.collection("students");
+  const studentSnapshot = await studentsCollection.get();
   return studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
 }
 
@@ -235,14 +237,14 @@ export async function getDashboardData(): Promise<{evaluations: Evaluation[], gr
 
 
 export async function getEvaluationsByStudent(studentId: string): Promise<Evaluation[]> {
-    const evaluationsCollection = collection(db, `students/${studentId}/evaluations`);
-    const q = query(evaluationsCollection);
-    const evaluationSnapshot = await getDocs(q);
+    const evaluationsCollection = adminDb.collection(`students/${studentId}/evaluations`);
+    const evaluationSnapshot = await evaluationsCollection.get();
     const evaluationList = evaluationSnapshot.docs.map(doc => {
         const data = doc.data();
         return { 
             id: doc.id, 
             ...data,
+            // Convert Timestamp to ISO string
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
         } as Evaluation
     });
@@ -276,5 +278,3 @@ export async function getFeedbackSuggestions(prevState: any, formData: FormData)
     };
   }
 }
-
-    
