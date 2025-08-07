@@ -105,7 +105,6 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         variant: "default",
         className: "bg-green-600 text-white border-green-700",
       });
-      // Refrescamos la página para obtener la nueva lista de profesores.
       router.refresh();
       form.reset({ teacherIds: [], evaluations: {} });
       setActiveAccordion("");
@@ -128,7 +127,6 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
   }, [state, isPending, form.formState.isSubmitted, router, form, toast, selectedTeachers, activeAccordion]);
 
   useEffect(() => {
-    // Sincronizamos la lista de profesores con los que vienen del servidor.
     setAvailableTeachers(initialAvailableTeachers);
   }, [initialAvailableTeachers]);
 
@@ -316,3 +314,5 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
     </FormProvider>
   );
 }
+
+    
