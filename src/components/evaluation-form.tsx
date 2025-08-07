@@ -20,6 +20,7 @@ import { useActionState } from "react";
 import { submitEvaluation, getGrades, getTeachers, getEvaluationsByStudent } from "@/app/actions";
 import { Skeleton } from "./ui/skeleton";
 import { FeedbackAssistant } from "./feedback-assistant";
+import { cn } from "@/lib/utils";
 
 const evaluationSchema = z.object({
   teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
@@ -242,9 +243,12 @@ export function EvaluationForm({ student }: { student: Student }) {
                             key={question.id}
                             control={form.control}
                             name={`evaluations.${teacher.id}.${question.id}`}
-                            render={({ field }) => (
-                              <FormItem className="space-y-3 rounded-lg border p-4">
-                                <FormLabel>{question.text}</FormLabel>
+                            render={({ field, fieldState }) => (
+                               <FormItem className={cn(
+                                "space-y-3 rounded-lg border p-4 transition-colors",
+                                fieldState.error && "border-yellow-500/50 bg-yellow-500/10"
+                              )}>
+                                <FormLabel className="text-base">{question.text}</FormLabel>
                                 <FormControl>
                                   <RadioGroup
                                     onValueChange={field.onChange}
@@ -301,3 +305,5 @@ export function EvaluationForm({ student }: { student: Student }) {
     </FormProvider>
   );
 }
+
+    
