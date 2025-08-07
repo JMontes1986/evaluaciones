@@ -1,10 +1,9 @@
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
 import { getApps } from 'firebase-admin/app';
-import { config } from 'dotenv';
 
-// Carga las variables de entorno desde .env.local
-config({ path: '.env.local' });
+// Next.js carga automáticamente las variables de entorno desde .env.local,
+// por lo que no es necesario llamar a dotenv.config() explícitamente.
 
 const serviceAccountString = process.env.FIREBASE_ADMIN_CONFIG;
 let adminDb: admin.firestore.Firestore;
@@ -25,6 +24,7 @@ if (getApps().length === 0 && serviceAccountString) {
 if (admin.apps.length > 0) {
     adminDb = admin.firestore();
 } else {
+    // Esta advertencia se mostrará si FIREBASE_ADMIN_CONFIG no está configurado.
     console.warn("ADVERTENCIA: Firebase Admin no está inicializado. Las operaciones de base de datos del servidor fallarán. Asegúrate de que FIREBASE_ADMIN_CONFIG esté configurado en tu archivo .env.local");
 }
 
