@@ -137,6 +137,8 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
 
   try {
     const batch = adminDb.batch();
+    const evaluationCollectionRef = adminDb.collection("evaluations");
+
     Object.entries(evaluations).forEach(([teacherId, evaluationData]) => {
       if (!teacherIds.includes(teacherId)) return;
 
@@ -146,7 +148,6 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
           .map(([key, value]) => [key, Number(value)])
       );
 
-      const evaluationCollectionRef = adminDb.collection("students").doc(student.id).collection("evaluations");
       const newEvalRef = evaluationCollectionRef.doc();
 
       const docData = {
@@ -173,7 +174,6 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     };
 
   } catch (error) {
-    console.error("Error al guardar la evaluación:", error);
     return {
       success: false,
       message: "Ocurrió un error al guardar tu evaluación. Por favor, inténtalo de nuevo más tarde.",
@@ -208,15 +208,18 @@ export async function getStudents(): Promise<Student[]> {
 }
 
 export async function getEvaluations(): Promise<Evaluation[]> {
-    const allStudents = await getStudents();
-    const allEvaluations: Evaluation[] = [];
-    
-    for (const student of allStudents) {
-        const studentEvals = await getEvaluationsByStudent(student.id);
-        allEvaluations.push(...studentEvals);
-    }
-    
-    return allEvaluations;
+    const evaluationsCollection = adminDb.collection("evaluations");
+    const evaluationSnapshot = await evaluationsCollection.get();
+    const evaluationList = evaluationSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id, 
+            ...data,
+            // Convert Timestamp to ISO string
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+        } as Evaluation
+    });
+    return evaluationList;
 }
 
 export async function getDashboardData(): Promise<{evaluations: Evaluation[], grades: Grade[], teachers: Teacher[]}> {
@@ -228,21 +231,21 @@ export async function getDashboardData(): Promise<{evaluations: Evaluation[], gr
     ]);
     return { evaluations, grades, teachers };
   } catch (error) {
-    console.error("Error fetching dashboard data:", error);
     return { evaluations: [], grades: [], teachers: [] };
   }
 }
 
 
 export async function getEvaluationsByStudent(studentId: string): Promise<Evaluation[]> {
-    const evaluationsCollection = adminDb.collection(`students/${studentId}/evaluations`);
-    const evaluationSnapshot = await evaluationsCollection.get();
+    const evaluationsCollection = adminDb.collection("evaluations");
+    const q = evaluationsCollection.where("studentId", "==", studentId);
+    const evaluationSnapshot = await q.get();
+
     const evaluationList = evaluationSnapshot.docs.map(doc => {
         const data = doc.data();
         return { 
             id: doc.id, 
             ...data,
-            // Convert Timestamp to ISO string
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
         } as Evaluation
     });
