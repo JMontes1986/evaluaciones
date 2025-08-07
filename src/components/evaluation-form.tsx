@@ -17,10 +17,12 @@ import { evaluationQuestions } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 import { Send, User } from "lucide-react";
 import { useActionState } from "react";
-import { submitEvaluation, getTeachers, getEvaluationsByStudent } from "@/app/actions";
+import { submitEvaluation } from "@/app/actions";
 import { Skeleton } from "./ui/skeleton";
 import { FeedbackAssistant } from "./feedback-assistant";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+
 
 const evaluationSchema = z.object({
   teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
@@ -61,12 +63,12 @@ interface EvaluationFormProps {
 
 export function EvaluationForm({ student, initialAvailableTeachers, studentGradeName }: EvaluationFormProps) {
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>(initialAvailableTeachers);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
   const [activeAccordion, setActiveAccordion] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
-  
+  const router = useRouter();
+
   const form = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationSchema),
     defaultValues: {
@@ -93,37 +95,6 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
     });
   }, [formValues]);
   
-  async function refetchTeachers(forceReset: boolean = false) {
-    setLoading(true);
-    try {
-      const [allTeachers, pastEvaluations] = await Promise.all([
-        getTeachers(),
-        getEvaluationsByStudent(student.id),
-      ]);
-      const evaluatedTeacherIds = new Set(pastEvaluations.map(e => e.teacherId));
-      const teachersForGrade = allTeachers.filter((t) => 
-          t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
-      );
-      setAvailableTeachers(teachersForGrade);
-      
-      if (forceReset) {
-          form.reset({ teacherIds: [], evaluations: {} });
-          setActiveAccordion("");
-      }
-
-    } catch (error) {
-      console.error("Error refetching teachers:", error);
-      toast({
-        title: "❌ ¡Error!",
-        description: "No se pudieron recargar los datos. Por favor, refresca la página.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-
   useEffect(() => {
     if (isPending) return;
 
@@ -134,7 +105,11 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         variant: "default",
         className: "bg-green-600 text-white border-green-700",
       });
-      refetchTeachers(true);
+      // Refrescamos la página para obtener la nueva lista de profesores.
+      router.refresh();
+      form.reset({ teacherIds: [], evaluations: {} });
+      setActiveAccordion("");
+
     } else if (state.message && !state.success && form.formState.isSubmitted) {
         toast({
             title: "❌ ¡Error!",
@@ -150,7 +125,13 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
             setActiveAccordion(`item-${firstInvalidTeacher}`);
         }
     }
-  }, [state, isPending, form.formState.isSubmitted]);
+  }, [state, isPending, form.formState.isSubmitted, router, form, toast, selectedTeachers, activeAccordion]);
+
+  useEffect(() => {
+    // Sincronizamos la lista de profesores con los que vienen del servidor.
+    setAvailableTeachers(initialAvailableTeachers);
+  }, [initialAvailableTeachers]);
+
 
   useEffect(() => {
     if (selectedTeachers.length > 0 && !activeAccordion) {
@@ -167,24 +148,6 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
     formAction(formData);
   };
   
-  if (loading) {
-     return (
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-1/2" />
-                    <Skeleton className="h-4 mt-2 w-3/4" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-10 w-full" />
-                </CardContent>
-            </Card>
-             <div className="flex justify-center items-center p-8">
-                 <p className="text-muted-foreground">Actualizando lista de profesores...</p>
-             </div>
-        </div>
-     )
-  }
 
   return (
     <FormProvider {...form}>
