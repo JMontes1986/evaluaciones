@@ -12,6 +12,7 @@ import { evaluationQuestions } from "@/lib/types";
 
 
 const evaluationSchema = z.object({
+  studentId: z.string(),
   teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
   evaluations: z.record(
     z.string(),
@@ -107,19 +108,10 @@ export async function studentLogout() {
 type EvaluationFormData = z.infer<typeof evaluationSchema>;
 
 export async function submitEvaluation(data: EvaluationFormData) {
-  const studentSession = cookies().get("student_session")?.value;
-
-  if (!studentSession) {
-    return {
-      success: false,
-      message: "No se ha encontrado una sesión de estudiante. Por favor, inicia sesión de nuevo.",
-    };
-  }
-  const student: Student = JSON.parse(studentSession);
-  
   const validatedFields = evaluationSchema.safeParse(data);
 
   if (!validatedFields.success) {
+    console.error("Validation failed:", validatedFields.error.flatten());
     return {
       success: false,
       message: "La validación falló. Por favor, revisa tus respuestas.",
@@ -127,7 +119,14 @@ export async function submitEvaluation(data: EvaluationFormData) {
     };
   }
 
-  const { teacherIds, evaluations } = validatedFields.data;
+  const { studentId, teacherIds, evaluations } = validatedFields.data;
+  
+  const studentDoc = await adminDb.collection("students").doc(studentId).get();
+  if (!studentDoc.exists) {
+      return { success: false, message: "No se pudo encontrar la información del estudiante." };
+  }
+  const student = studentDoc.data() as Student;
+
 
   try {
     const batch = adminDb.batch();
@@ -148,7 +147,7 @@ export async function submitEvaluation(data: EvaluationFormData) {
         const docData: Omit<Evaluation, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
             gradeId: student.gradeId,
             teacherId,
-            studentId: student.id,
+            studentId: studentId,
             scores,
             feedback: evaluationData.feedback || "",
             createdAt: FieldValue.serverTimestamp(),
@@ -233,6 +232,7 @@ export async function getDashboardData(): Promise<{evaluations: Evaluation[], gr
 
 
 export async function getEvaluationsByStudent(studentId: string): Promise<Evaluation[]> {
+    if (!studentId) return [];
     const evaluationsCollection = adminDb.collection("evaluations");
     const q = evaluationsCollection.where("studentId", "==", studentId);
     const evaluationSnapshot = await q.get();
@@ -247,3 +247,4 @@ export async function getEvaluationsByStudent(studentId: string): Promise<Evalua
     });
     return evaluationList;
 }
+

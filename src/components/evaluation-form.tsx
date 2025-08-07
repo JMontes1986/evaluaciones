@@ -80,11 +80,11 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         return typeof value === 'string' && value.length > 0;
       });
     });
-  }, [watchedValues, evaluationQuestions, form.watch]);
+  }, [watchedValues, evaluationQuestions, form.watch()]);
   
   const onSubmit = (data: EvaluationFormData) => {
     startTransition(async () => {
-      const result = await submitEvaluation(data);
+      const result = await submitEvaluation({ ...data, studentId: student.id });
 
       if (result.success) {
         toast({
