@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,7 +28,9 @@ const evaluationSchema = z.object({
     z.string(),
     z.object({
       ...evaluationQuestions.reduce((acc, q) => {
-        acc[q.id] = z.string().min(1, `Por favor, califica este criterio.`);
+        acc[q.id] = z.string({
+            required_error: "Por favor, califica este criterio.",
+        }).min(1, `Por favor, califica este criterio.`);
         return acc;
       }, {} as Record<string, z.ZodString>),
       feedback: z.string().optional(),
@@ -59,6 +61,7 @@ export function EvaluationForm({ student }: { student: Student }) {
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
   const [activeAccordion, setActiveAccordion] = useState<string>("");
+  const formRef = useRef<HTMLFormElement>(null);
   
   const studentGradeName = useMemo(() => {
     if (!grades || grades.length === 0) return "";
@@ -72,7 +75,7 @@ export function EvaluationForm({ student }: { student: Student }) {
       teacherIds: [],
       evaluations: {},
     },
-    mode: 'onChange', // Validate on change to enable/disable button
+    mode: 'onChange',
   });
 
   const selectedTeachers = form.watch("teacherIds");
@@ -82,11 +85,13 @@ export function EvaluationForm({ student }: { student: Student }) {
     if (!formValues.teacherIds || formValues.teacherIds.length === 0) {
       return false;
     }
-    // Check if every selected teacher has all questions answered
     return formValues.teacherIds.every(teacherId => {
       const teacherEval = formValues.evaluations?.[teacherId];
       if (!teacherEval) return false;
-      return evaluationQuestions.every(q => teacherEval[q.id]?.length > 0);
+      return evaluationQuestions.every(q => {
+        const value = teacherEval[q.id as keyof typeof teacherEval];
+        return typeof value === 'string' && value.length > 0;
+      });
     });
   }, [formValues]);
   
@@ -128,29 +133,25 @@ export function EvaluationForm({ student }: { student: Student }) {
 
   useEffect(() => {
     fetchData();
-     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
   useEffect(() => {
-    if (state.success) {
-        toast({
-            title: "✅ ¡Evaluación Enviada!",
-            description: "¡Gracias por tus comentarios! Tu opinión nos ayuda a mejorar.",
-            variant: "default",
-            className: "bg-green-600 text-white border-green-700",
-        });
-        fetchData(true);
-    } else if (state.message && !state.success) {
-        toast({
-            title: "❌ ¡Error!",
-            description: state.message,
-            variant: "destructive",
-        });
+    if (!isPending && state.success) {
+      toast({
+        title: "✅ ¡Evaluación Enviada!",
+        description: "¡Gracias por tus comentarios! Tu opinión nos ayuda a mejorar.",
+        variant: "default",
+        className: "bg-green-600 text-white border-green-700",
+      });
+      fetchData(true);
+    } else if (!isPending && state.message && !state.success) {
+      toast({
+        title: "❌ ¡Error!",
+        description: state.message,
+        variant: "destructive",
+      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
-
+  }, [state, isPending]);
 
   useEffect(() => {
     if (selectedTeachers.length > 0 && !activeAccordion) {
@@ -165,8 +166,8 @@ export function EvaluationForm({ student }: { student: Student }) {
     formData.append("evaluations", JSON.stringify(values.evaluations));
     formData.append("teacherIds", JSON.stringify(values.teacherIds));
     formAction(formData);
-  }
-
+  };
+  
   if (loading) {
      return (
         <div className="space-y-8">
@@ -185,7 +186,7 @@ export function EvaluationForm({ student }: { student: Student }) {
 
   return (
     <FormProvider {...form}>
-      <form action={handleFormAction} className="space-y-8">
+      <form ref={formRef} action={handleFormAction} className="space-y-8">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Hola, {student.name}</CardTitle>
@@ -221,6 +222,16 @@ export function EvaluationForm({ student }: { student: Student }) {
                                       const currentEvals = form.getValues("evaluations");
                                       delete currentEvals[teacher.id];
                                       form.setValue("evaluations", currentEvals);
+                                    } else {
+                                        // Initialize evaluation object for the new teacher
+                                        const currentEvals = form.getValues("evaluations");
+                                        form.setValue("evaluations", {
+                                            ...currentEvals,
+                                            [teacher.id]: {
+                                                ...evaluationQuestions.reduce((acc, q) => ({...acc, [q.id]: ""}), {}),
+                                                feedback: ""
+                                            }
+                                        })
                                     }
                                   }}
                                 />
@@ -243,8 +254,8 @@ export function EvaluationForm({ student }: { student: Student }) {
                <FormField
                 control={form.control}
                 name="teacherIds"
-                render={() => (
-                   <FormMessage />
+                render={({fieldState}) => (
+                   <FormMessage>{fieldState.error?.message}</FormMessage>
                 )}
               />
             </CardContent>
@@ -274,7 +285,7 @@ export function EvaluationForm({ student }: { student: Student }) {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="p-2 space-y-6">
-                        {evaluationQuestions.map((question) => (
+                        {evaluationQuestions.map((question, index) => (
                           <FormField
                             key={question.id}
                             control={form.control}
@@ -282,26 +293,26 @@ export function EvaluationForm({ student }: { student: Student }) {
                             render={({ field, fieldState }) => (
                                <FormItem className={cn(
                                 "space-y-3 rounded-lg border p-4 transition-colors",
-                                fieldState.invalid && "border-green-500/50 bg-green-900/40 text-white"
+                                fieldState.invalid && form.formState.isSubmitted && "border-green-500/50 bg-green-900/40 text-white"
                               )}>
-                                <FormLabel className={cn("text-base", fieldState.invalid && "text-white")}>{question.text}</FormLabel>
+                                <FormLabel className={cn("text-base", fieldState.invalid && form.formState.isSubmitted && "text-white")}>{index + 1}. {question.text}</FormLabel>
                                 <FormControl>
                                   <RadioGroup
                                     onValueChange={field.onChange}
-                                    defaultValue={field.value}
+                                    value={field.value}
                                     className="flex flex-wrap items-center gap-x-6 gap-y-2"
                                   >
                                     {ratingOptions.map((option) => (
                                       <FormItem key={option.value} className="flex items-center space-x-2 space-y-0">
                                         <FormControl>
-                                          <RadioGroupItem value={option.value} className={cn(fieldState.invalid && "border-white text-white")} />
+                                          <RadioGroupItem value={option.value} className={cn(fieldState.invalid && form.formState.isSubmitted && "border-white text-white")} />
                                         </FormControl>
-                                        <FormLabel className={cn("font-normal", fieldState.invalid && "text-white")}>{option.label}</FormLabel>
+                                        <FormLabel className={cn("font-normal", fieldState.invalid && form.formState.isSubmitted && "text-white")}>{option.label}</FormLabel>
                                       </FormItem>
                                     ))}
                                   </RadioGroup>
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className={cn(fieldState.invalid && form.formState.isSubmitted && "text-yellow-300")} />
                               </FormItem>
                             )}
                           />

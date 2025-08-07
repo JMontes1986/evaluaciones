@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, getDocs, query, where, collectionGroup } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, collectionGroup, getDoc, doc } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import type { Evaluation, Grade, Teacher, Student } from "@/lib/types";
 import { getFeedbackSuggestions as getFeedbackSuggestionsAI } from "@/ai/flows/feedback-assistant";
@@ -109,8 +109,9 @@ export async function studentLogin(prevState: any, formData: FormData) {
     }
 
     const studentData = studentSnapshot.docs[0].data() as Student;
+    const studentId = studentSnapshot.docs[0].id;
     const expires = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
-    cookies().set("student_session", JSON.stringify({...studentData, id: studentSnapshot.docs[0].id}), { expires, httpOnly: true });
+    cookies().set("student_session", JSON.stringify({...studentData, id: studentId}), { expires, httpOnly: true });
     
     revalidatePath("/evaluation");
     redirect("/evaluation");
@@ -224,18 +225,22 @@ export async function getTeachers(): Promise<Teacher[]> {
     return teacherList;
 }
 
+export async function getStudents(): Promise<Student[]> {
+  const studentsCollection = collection(db, "students");
+  const studentSnapshot = await getDocs(studentsCollection);
+  return studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
+}
+
 export async function getEvaluations(): Promise<Evaluation[]> {
-    const evaluationsCollection = collectionGroup(db, "evaluations");
-    const evaluationSnapshot = await getDocs(evaluationsCollection);
-    const evaluationList = evaluationSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return { 
-        id: doc.id, 
-        ...data,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
-      } as Evaluation
-    });
-    return evaluationList;
+    const allStudents = await getStudents();
+    const allEvaluations: Evaluation[] = [];
+    
+    for (const student of allStudents) {
+        const studentEvals = await getEvaluationsByStudent(student.id);
+        allEvaluations.push(...studentEvals);
+    }
+    
+    return allEvaluations;
 }
 
 export async function getDashboardData(): Promise<{evaluations: Evaluation[], grades: Grade[], teachers: Teacher[]}> {
@@ -248,8 +253,6 @@ export async function getDashboardData(): Promise<{evaluations: Evaluation[], gr
     return { evaluations, grades, teachers };
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
-    // En un caso real, podrías querer manejar este error de forma más específica.
-    // Por ahora, devolvemos arrays vacíos para que el dashboard no se rompa.
     return { evaluations: [], grades: [], teachers: [] };
   }
 }
@@ -297,4 +300,3 @@ export async function getFeedbackSuggestions(prevState: any, formData: FormData)
     };
   }
 }
-

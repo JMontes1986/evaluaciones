@@ -24,6 +24,7 @@ export function DashboardClient() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      setLoading(true);
       try {
         const { evaluations: evals, grades: gradesData, teachers: teachersData } = await getDashboardData();
         
@@ -98,7 +99,7 @@ export function DashboardClient() {
   
   const questionAverages = useMemo(() => {
     return (evaluationQuestions.map(q => {
-      const scores = filteredData.map(e => e.scores?.[q.id]).filter(s => typeof s === 'number');
+      const scores = filteredData.flatMap(e => e.scores?.[q.id] ? [e.scores[q.id]] : []).filter(s => typeof s === 'number');
       if (scores.length === 0) return null;
       const average = scores.reduce((a, b) => a + b, 0) / scores.length;
       return { name: q.text.substring(0, 25) + "...", average: average.toFixed(2) };
