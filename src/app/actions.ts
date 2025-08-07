@@ -174,6 +174,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     };
 
   } catch (error) {
+    console.error("Error submitting evaluation:", error);
     return {
       success: false,
       message: "Ocurrió un error al guardar tu evaluación. Por favor, inténtalo de nuevo más tarde.",
@@ -231,6 +232,7 @@ export async function getDashboardData(): Promise<{evaluations: Evaluation[], gr
     ]);
     return { evaluations, grades, teachers };
   } catch (error) {
+    console.error("Error fetching dashboard data:", error);
     return { evaluations: [], grades: [], teachers: [] };
   }
 }
@@ -251,3 +253,4 @@ export async function getEvaluationsByStudent(studentId: string): Promise<Evalua
     });
     return evaluationList;
 }
+
