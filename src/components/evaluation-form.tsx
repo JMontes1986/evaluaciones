@@ -13,7 +13,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import type { Teacher, Student } from "@/lib/types";
-import { evaluationQuestions } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 import { Send, User } from "lucide-react";
 import { useActionState } from "react";
@@ -23,24 +22,6 @@ import { FeedbackAssistant } from "./feedback-assistant";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-
-const evaluationSchema = z.object({
-  teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
-  evaluations: z.record(
-    z.string(),
-    z.object({
-      ...evaluationQuestions.reduce((acc, q) => {
-        acc[q.id] = z.string({
-            required_error: "Por favor, califica este criterio.",
-        }).min(1, `Por favor, califica este criterio.`);
-        return acc;
-      }, {} as Record<string, z.ZodString>),
-      feedback: z.string().optional(),
-    })
-  ),
-});
-
-type EvaluationFormData = z.infer<typeof evaluationSchema>;
 
 const initialState = {
   success: false,
@@ -59,15 +40,34 @@ interface EvaluationFormProps {
   student: Student;
   initialAvailableTeachers: Teacher[];
   studentGradeName?: string;
+  evaluationQuestions: {id: string, text: string}[];
 }
 
-export function EvaluationForm({ student, initialAvailableTeachers, studentGradeName }: EvaluationFormProps) {
+export function EvaluationForm({ student, initialAvailableTeachers, studentGradeName, evaluationQuestions }: EvaluationFormProps) {
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>(initialAvailableTeachers);
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
   const [activeAccordion, setActiveAccordion] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
+
+  const evaluationSchema = useMemo(() => z.object({
+    teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
+    evaluations: z.record(
+      z.string(),
+      z.object({
+        ...evaluationQuestions.reduce((acc, q) => {
+          acc[q.id] = z.string({
+              required_error: "Por favor, califica este criterio.",
+          }).min(1, `Por favor, califica este criterio.`);
+          return acc;
+        }, {} as Record<string, z.ZodString>),
+        feedback: z.string().optional(),
+      })
+    ),
+  }), [evaluationQuestions]);
+
+  type EvaluationFormData = z.infer<typeof evaluationSchema>;
 
   const form = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationSchema),
@@ -93,7 +93,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         return typeof value === 'string' && value.length > 0;
       });
     });
-  }, [formValues]);
+  }, [formValues, evaluationQuestions]);
   
   useEffect(() => {
     if (isPending) return;
@@ -124,7 +124,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
             setActiveAccordion(`item-${firstInvalidTeacher}`);
         }
     }
-  }, [state, isPending, form.formState.isSubmitted, router, form, toast, selectedTeachers, activeAccordion]);
+  }, [state, isPending, form.formState.isSubmitted, router, form, toast, selectedTeachers, activeAccordion, evaluationQuestions]);
 
   useEffect(() => {
     setAvailableTeachers(initialAvailableTeachers);
@@ -314,5 +314,3 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
     </FormProvider>
   );
 }
-
-    

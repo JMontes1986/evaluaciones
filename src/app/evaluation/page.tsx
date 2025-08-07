@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import type { Student, Teacher, Grade } from "@/lib/types";
 import { StudentLogin } from "@/components/student-login";
 import { getGrades, getTeachers, getEvaluationsByStudent } from "@/app/actions";
+import { evaluationQuestions } from "@/lib/types";
 
 async function getEvaluationData(student: Student) {
   try {
@@ -56,6 +57,7 @@ export default async function EvaluationPage() {
               student={student} 
               initialAvailableTeachers={evaluationData.availableTeachers}
               studentGradeName={evaluationData.studentGradeName}
+              evaluationQuestions={evaluationQuestions}
             />
           ) : (
             <StudentLogin />
