@@ -118,7 +118,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
 
   const student: Student = JSON.parse(studentSession);
 
-  // Extraer los datos del formulario directamente.
+  // The form now sends JSON strings, so we parse them.
   const rawData = {
     teacherIds: JSON.parse(formData.get("teacherIds") as string),
     evaluations: JSON.parse(formData.get("evaluations") as string)
@@ -140,10 +140,10 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     const batch = adminDb.batch();
     const evaluationCollectionRef = adminDb.collection("evaluations");
 
-    // Iterar solo sobre los profesores seleccionados que tienen datos.
+    // Iterate over the selected teachers who have data.
     teacherIds.forEach((teacherId) => {
         const evaluationData = evaluations[teacherId];
-        if (!evaluationData) return; // Si no hay datos para este profesor, saltar.
+        if (!evaluationData) return; // Skip if there's no data for this teacher.
 
         const scores = Object.fromEntries(
             Object.entries(evaluationData)
@@ -151,7 +151,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
             .map(([key, value]) => [key, Number(value)])
         );
 
-        // Crear una nueva referencia de documento para cada evaluación en la colección raíz 'evaluations'.
+        // Create a new document reference for each evaluation in the root 'evaluations' collection.
         const newEvalRef = evaluationCollectionRef.doc();
 
         const docData: Omit<Evaluation, 'id' | 'createdAt'> & { createdAt: FieldValue } = {

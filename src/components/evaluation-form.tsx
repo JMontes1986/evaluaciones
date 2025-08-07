@@ -138,6 +138,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
 
   const handleFormAction = (formData: FormData) => {
     const values = form.getValues();
+    // This is crucial: we serialize the objects into JSON strings before sending
     formData.append("evaluations", JSON.stringify(values.evaluations));
     formData.append("teacherIds", JSON.stringify(values.teacherIds));
     formAction(formData);
@@ -252,9 +253,9 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
                             render={({ field, fieldState }) => (
                                <FormItem className={cn(
                                 "space-y-3 rounded-lg border p-4 transition-colors",
-                                fieldState.invalid && form.formState.isSubmitted && "border-green-500/50 bg-green-900/40 text-white"
+                                fieldState.invalid && form.formState.isSubmitted && "border-destructive/50 bg-destructive/10"
                               )}>
-                                <FormLabel className={cn("text-base", fieldState.invalid && form.formState.isSubmitted && "text-white")}>{index + 1}. {question.text}</FormLabel>
+                                <FormLabel className={cn("text-base", fieldState.invalid && form.formState.isSubmitted && "text-destructive")}>{index + 1}. {question.text}</FormLabel>
                                 <FormControl>
                                   <RadioGroup
                                     onValueChange={field.onChange}
@@ -264,14 +265,14 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
                                     {ratingOptions.map((option) => (
                                       <FormItem key={option.value} className="flex items-center space-x-2 space-y-0">
                                         <FormControl>
-                                          <RadioGroupItem value={option.value} className={cn(fieldState.invalid && form.formState.isSubmitted && "border-white text-white")} />
+                                          <RadioGroupItem value={option.value} className={cn(fieldState.invalid && form.formState.isSubmitted && "border-destructive text-destructive")} />
                                         </FormControl>
-                                        <FormLabel className={cn("font-normal", fieldState.invalid && form.formState.isSubmitted && "text-white")}>{option.label}</FormLabel>
+                                        <FormLabel className={cn("font-normal", fieldState.invalid && form.formState.isSubmitted && "text-destructive")}>{option.label}</FormLabel>
                                       </FormItem>
                                     ))}
                                   </RadioGroup>
                                 </FormControl>
-                                <FormMessage className={cn(fieldState.invalid && form.formState.isSubmitted && "text-yellow-300")} />
+                                <FormMessage />
                               </FormItem>
                             )}
                           />
