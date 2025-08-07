@@ -72,9 +72,23 @@ export function EvaluationForm({ student }: { student: Student }) {
       teacherIds: [],
       evaluations: {},
     },
+    mode: 'onChange', // Validate on change to enable/disable button
   });
 
   const selectedTeachers = form.watch("teacherIds");
+  const formValues = form.watch();
+
+  const isFormSubmittable = useMemo(() => {
+    if (!formValues.teacherIds || formValues.teacherIds.length === 0) {
+      return false;
+    }
+    // Check if every selected teacher has all questions answered
+    return formValues.teacherIds.every(teacherId => {
+      const teacherEval = formValues.evaluations?.[teacherId];
+      if (!teacherEval) return false;
+      return evaluationQuestions.every(q => teacherEval[q.id]?.length > 0);
+    });
+  }, [formValues]);
   
   async function fetchData(forceReset: boolean = false) {
     setLoading(true);
@@ -126,10 +140,7 @@ export function EvaluationForm({ student }: { student: Student }) {
             variant: "default",
             className: "bg-green-600 text-white border-green-700",
         });
-        fetchData(true);
-    } else if (state.message && !state.success && state.errors) {
-        // This handles validation errors. We don't toast here.
-        // The form validation UI will handle showing the errors.
+        fetchData(true); // Reset form only on success
     } else if (state.message && !state.success) {
         // This handles other server errors (e.g., database connection issues)
         toast({
@@ -138,7 +149,7 @@ export function EvaluationForm({ student }: { student: Student }) {
             variant: "destructive",
         });
     }
-     // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
 
@@ -150,19 +161,7 @@ export function EvaluationForm({ student }: { student: Student }) {
     }
   }, [selectedTeachers, activeAccordion]);
 
-  const handleFormAction = async (formData: FormData) => {
-    const isValid = await form.trigger();
-    if (!isValid) {
-      const errors = form.formState.errors.evaluations;
-      if (errors) {
-        const teacherWithError = selectedTeachers.find(teacherId => errors[teacherId]);
-        if (teacherWithError) {
-          setActiveAccordion(`item-${teacherWithError}`);
-        }
-      }
-      return;
-    }
-
+  const handleFormAction = (formData: FormData) => {
     const values = form.getValues();
     formData.append("evaluations", JSON.stringify(values.evaluations));
     formData.append("teacherIds", JSON.stringify(values.teacherIds));
@@ -284,9 +283,9 @@ export function EvaluationForm({ student }: { student: Student }) {
                             render={({ field, fieldState }) => (
                                <FormItem className={cn(
                                 "space-y-3 rounded-lg border p-4 transition-colors",
-                                fieldState.error && "border-green-500/50 bg-green-900/40 text-white"
+                                fieldState.invalid && "border-green-500/50 bg-green-900/40 text-white"
                               )}>
-                                <FormLabel className={cn("text-base", fieldState.error && "text-white")}>{question.text}</FormLabel>
+                                <FormLabel className={cn("text-base", fieldState.invalid && "text-white")}>{question.text}</FormLabel>
                                 <FormControl>
                                   <RadioGroup
                                     onValueChange={field.onChange}
@@ -296,9 +295,9 @@ export function EvaluationForm({ student }: { student: Student }) {
                                     {ratingOptions.map((option) => (
                                       <FormItem key={option.value} className="flex items-center space-x-2 space-y-0">
                                         <FormControl>
-                                          <RadioGroupItem value={option.value} className={cn(fieldState.error && "border-white text-white")} />
+                                          <RadioGroupItem value={option.value} className={cn(fieldState.invalid && "border-white text-white")} />
                                         </FormControl>
-                                        <FormLabel className={cn("font-normal", fieldState.error && "text-white")}>{option.label}</FormLabel>
+                                        <FormLabel className={cn("font-normal", fieldState.invalid && "text-white")}>{option.label}</FormLabel>
                                       </FormItem>
                                     ))}
                                   </RadioGroup>
@@ -334,7 +333,7 @@ export function EvaluationForm({ student }: { student: Student }) {
 
         {selectedTeachers && selectedTeachers.length > 0 && (
           <div className="flex justify-end">
-            <Button type="submit" size="lg" disabled={isPending}>
+             <Button type="submit" size="lg" disabled={isPending || !isFormSubmittable}>
               {isPending ? "Enviando..." : "Enviar Evaluaciones"} <Send className="ml-2 h-5 w-5" />
             </Button>
           </div>
