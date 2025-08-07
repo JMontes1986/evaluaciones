@@ -74,7 +74,8 @@ export function EvaluationForm({ student }: { student: Student }) {
   });
   
   useEffect(() => {
-    async function fetchData() {
+    async function fetchData(forceReset: boolean = false) {
+      setLoading(true);
       try {
         const [gradesData, teachersData, pastEvaluations] = await Promise.all([
           getGrades(),
@@ -90,6 +91,10 @@ export function EvaluationForm({ student }: { student: Student }) {
             t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
         );
         setAvailableTeachers(teachersForGrade);
+        
+        if (forceReset) {
+            form.reset({ teacherIds: [], evaluations: {} });
+        }
 
       } catch (error) {
         console.error("Error fetching initial data:", error);
@@ -102,31 +107,33 @@ export function EvaluationForm({ student }: { student: Student }) {
         setLoading(false);
       }
     }
-    fetchData();
-  }, [toast, student.gradeId, student.id, state.success]); // Re-fetch data on successful submission
-
-  const selectedTeachers = form.watch("teacherIds");
-
-  useEffect(() => {
-    if (!state.message) return;
 
     if (state.success) {
-      toast({
-        title: "✅ ¡Éxito!",
-        description: state.message,
-        variant: "default",
-        className: "bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600",
-      });
-      form.reset({ teacherIds: [], evaluations: {} });
-    } else {
-       toast({
-        title: "❌ ¡Error!",
-        description: state.message,
-        variant: "destructive",
-      });
+        toast({
+            title: "✅ ¡Éxito!",
+            description: state.message,
+            variant: "default",
+            className: "bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600",
+        });
+        fetchData(true); // Re-fetch and reset form
+    } else if (state.message) {
+        // No toast on validation fail, only on server/unexpected errors
+        if (!state.errors) {
+            toast({
+                title: "❌ ¡Error!",
+                description: state.message,
+                variant: "destructive",
+            });
+        }
     }
 
-  }, [state, toast, form]);
+    // Initial fetch
+    if (!state.message) {
+      fetchData();
+    }
+  }, [state, toast, student.gradeId, student.id, form]);
+
+  const selectedTeachers = form.watch("teacherIds");
 
   const handleFormAction = async (formData: FormData) => {
     const isValid = await form.trigger();
@@ -238,8 +245,8 @@ export function EvaluationForm({ student }: { student: Student }) {
                     <AccordionItem value={`item-${teacher.id}`} key={teacher.id}>
                       <AccordionTrigger className="text-lg hover:no-underline">
                         <div className="flex items-center gap-4">
-                           <div className="p-3 bg-secondary rounded-full">
-                                <User className="h-5 w-5 text-primary" />
+                           <div className="p-3 bg-primary rounded-full">
+                                <User className="h-5 w-5 text-primary-foreground" />
                            </div>
                            <div>
                             <p>{teacher.name}</p>
@@ -256,9 +263,9 @@ export function EvaluationForm({ student }: { student: Student }) {
                             render={({ field, fieldState }) => (
                                <FormItem className={cn(
                                 "space-y-3 rounded-lg border p-4 transition-colors",
-                                fieldState.error && "border-yellow-500/50 bg-yellow-500/10"
+                                fieldState.error && "border-green-500/50 bg-green-900/40 text-white"
                               )}>
-                                <FormLabel className="text-base">{question.text}</FormLabel>
+                                <FormLabel className={cn("text-base", fieldState.error && "text-white")}>{question.text}</FormLabel>
                                 <FormControl>
                                   <RadioGroup
                                     onValueChange={field.onChange}
@@ -268,9 +275,9 @@ export function EvaluationForm({ student }: { student: Student }) {
                                     {ratingOptions.map((option) => (
                                       <FormItem key={option.value} className="flex items-center space-x-2 space-y-0">
                                         <FormControl>
-                                          <RadioGroupItem value={option.value} />
+                                          <RadioGroupItem value={option.value} className={cn(fieldState.error && "border-white text-white")} />
                                         </FormControl>
-                                        <FormLabel className="font-normal">{option.label}</FormLabel>
+                                        <FormLabel className={cn("font-normal", fieldState.error && "text-white")}>{option.label}</FormLabel>
                                       </FormItem>
                                     ))}
                                   </RadioGroup>
@@ -285,7 +292,7 @@ export function EvaluationForm({ student }: { student: Student }) {
                           name={`evaluations.${teacher.id}.feedback`}
                           render={({ field }) => (
                             <FormItem className="space-y-2 rounded-lg border p-4">
-                              <FormLabel>Observaciones (Opcional)</FormLabel>
+                              <FormLabel className="text-base">Observaciones (Opcional)</FormLabel>
                                 <FeedbackAssistant
                                     control={form.control}
                                     name={`evaluations.${teacher.id}.feedback`}
