@@ -1,53 +1,12 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the user is a student (based on cookie session logic)
-    // Note: This relies on the server actions validating the session.
-    // Client-side, we assume no one is "authenticated" in the Firebase sense.
-    // Server-side calls will bypass these rules. These rules are for client protection.
-    function isStudent() {
-      // For client-side rules, we can't securely check a cookie.
-      // We will make grades and teachers readable by anyone, as it's not sensitive data.
-      // The actual creation of evaluations is done via a server action which is more secure.
-      return true; 
-    }
-
-    // Grades and Teachers are public knowledge for the app to function.
-    match /grades/{gradeId} {
-      allow read: if true;
-      allow write: if false; // Can only be changed from the server/seed script
-    }
-
-    match /teachers/{teacherId} {
-      allow read: if true;
-      allow write: if false; // Can only be changed from the server/seed script
-    }
-
-    // Students collection
-    match /students/{studentId} {
-      allow read: if false; // Students shouldn't read other students' data
-      allow write: if false; // Students are created by seed script
-      
-      // Evaluations subcollection
-      match /evaluations/{evaluationId} {
-        // A student can create an evaluation for themselves.
-        // The server action is the one performing the write.
-        // We'll deny client-side creation to be safe.
-        allow create: if false;
-        
-        // No one can read evaluations directly from the client, only the server can.
-        allow read, update, delete: if false;
-      }
-    }
-
-    // This rule is needed for the admin dashboard to fetch evaluations from all students.
-    // The server-side logic iterates through students, so it doesn't need collectionGroup query rules.
-    // We deny client-side collectionGroup queries for security.
-    match /{path=**}/evaluations/{evaluationId} {
-       allow read, list: if false;
+    // Deny all client-side access by default.
+    // Your application should rely on server-side logic (Next.js Server Actions)
+    // to interact with the database, which bypasses these rules.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
