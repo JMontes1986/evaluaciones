@@ -73,7 +73,9 @@ export function EvaluationForm({ student }: { student: Student }) {
       evaluations: {},
     },
   });
-  
+
+  const selectedTeachers = form.watch("teacherIds");
+
   useEffect(() => {
     async function fetchData(forceReset: boolean = false) {
       setLoading(true);
@@ -113,28 +115,22 @@ export function EvaluationForm({ student }: { student: Student }) {
     if (state.success) {
         toast({
             title: "✅ ¡Evaluación Enviada!",
-            description: "Gracias por tus comentarios. ¡Ayudan a que nuestra escuela sea mejor!",
+            description: "¡Gracias por tus comentarios! Ayudan a que nuestra escuela sea mejor.",
             variant: "default",
-            className: "bg-accent text-accent-foreground border-green-500",
+            className: "bg-green-600 text-white border-green-700",
         });
-        fetchData(true); // Re-fetch and reset form
-    } else if (state.message) {
-        if (!state.errors) {
-            toast({
-                title: "❌ ¡Error!",
-                description: state.message,
-                variant: "destructive",
-            });
-        }
+        fetchData(true);
+    } else if (state.message && !state.errors) {
+        toast({
+            title: "❌ ¡Error!",
+            description: state.message,
+            variant: "destructive",
+        });
     }
 
-    // Initial fetch
-    if (!state.message || state.success) {
-      fetchData();
-    }
-  }, [state, toast, student.gradeId, student.id, form]);
+    fetchData();
+  }, [state.success, state.message, state.errors, toast, student.gradeId, student.id, form]);
 
-  const selectedTeachers = form.watch("teacherIds");
 
   useEffect(() => {
     if (selectedTeachers.length > 0 && !activeAccordion) {
@@ -150,14 +146,12 @@ export function EvaluationForm({ student }: { student: Student }) {
       // Find the first teacher with an error and open their accordion
       const errors = form.formState.errors.evaluations;
       if (errors) {
-        for (const teacherId of selectedTeachers) {
-          if (errors[teacherId]) {
-            setActiveAccordion(`item-${teacherId}`);
-            break;
-          }
+        const teacherWithError = selectedTeachers.find(teacherId => errors[teacherId]);
+        if (teacherWithError) {
+          setActiveAccordion(`item-${teacherWithError}`);
         }
       }
-      return;
+      return; // Stop the submission
     }
 
     const values = form.getValues();
