@@ -15,11 +15,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Redirigir de la raíz a la página de evaluación
-  if (pathname === "/") {
-     return NextResponse.redirect(new URL("/evaluation", request.url));
-  }
-
   return NextResponse.next();
 }
 
