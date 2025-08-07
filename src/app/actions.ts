@@ -237,6 +237,7 @@ export async function getDashboardData(): Promise<{evaluations: Evaluation[], gr
     return { evaluations, grades, teachers };
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
+    // Ensure we always return a valid object, even in case of an error.
     return { evaluations: [], grades: [], teachers: [] };
   }
 }

@@ -26,15 +26,26 @@ export function DashboardClient() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const { evaluations: evals, grades: gradesData, teachers: teachersData } = await getDashboardData();
-        
-        setEvaluations(evals);
-        setFilteredData(evals);
-        setGrades(gradesData);
-        setTeachers(teachersData);
+        const data = await getDashboardData();
+        if (data) {
+          const { evaluations: evals, grades: gradesData, teachers: teachersData } = data;
+          setEvaluations(evals || []);
+          setFilteredData(evals || []);
+          setGrades(gradesData || []);
+          setTeachers(teachersData || []);
+        } else {
+            setEvaluations([]);
+            setFilteredData([]);
+            setGrades([]);
+            setTeachers([]);
+        }
 
       } catch (error) {
         console.error("Error fetching data: ", error);
+        setEvaluations([]);
+        setFilteredData([]);
+        setGrades([]);
+        setTeachers([]);
       } finally {
         setLoading(false);
       }
