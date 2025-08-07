@@ -58,6 +58,7 @@ export function EvaluationForm({ student }: { student: Student }) {
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
+  const [activeAccordion, setActiveAccordion] = useState<string>("");
   
   const studentGradeName = useMemo(() => {
     if (!grades || grades.length === 0) return "";
@@ -94,6 +95,7 @@ export function EvaluationForm({ student }: { student: Student }) {
         
         if (forceReset) {
             form.reset({ teacherIds: [], evaluations: {} });
+            setActiveAccordion("");
         }
 
       } catch (error) {
@@ -110,14 +112,13 @@ export function EvaluationForm({ student }: { student: Student }) {
 
     if (state.success) {
         toast({
-            title: "✅ ¡Éxito!",
-            description: state.message,
+            title: "✅ ¡Evaluación Enviada!",
+            description: "Gracias por tus comentarios. ¡Ayudan a que nuestra escuela sea mejor!",
             variant: "default",
-            className: "bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600",
+            className: "bg-accent text-accent-foreground border-green-500",
         });
         fetchData(true); // Re-fetch and reset form
     } else if (state.message) {
-        // No toast on validation fail, only on server/unexpected errors
         if (!state.errors) {
             toast({
                 title: "❌ ¡Error!",
@@ -128,17 +129,34 @@ export function EvaluationForm({ student }: { student: Student }) {
     }
 
     // Initial fetch
-    if (!state.message) {
+    if (!state.message || state.success) {
       fetchData();
     }
   }, [state, toast, student.gradeId, student.id, form]);
 
   const selectedTeachers = form.watch("teacherIds");
 
+  useEffect(() => {
+    if (selectedTeachers.length > 0 && !activeAccordion) {
+      setActiveAccordion(`item-${selectedTeachers[0]}`);
+    } else if (selectedTeachers.length === 0) {
+      setActiveAccordion("");
+    }
+  }, [selectedTeachers, activeAccordion]);
+
   const handleFormAction = async (formData: FormData) => {
     const isValid = await form.trigger();
     if (!isValid) {
-      // Don't submit, the form will show validation errors
+      // Find the first teacher with an error and open their accordion
+      const errors = form.formState.errors.evaluations;
+      if (errors) {
+        for (const teacherId of selectedTeachers) {
+          if (errors[teacherId]) {
+            setActiveAccordion(`item-${teacherId}`);
+            break;
+          }
+        }
+      }
       return;
     }
 
@@ -238,7 +256,7 @@ export function EvaluationForm({ student }: { student: Student }) {
               <CardDescription>Califica a cada profesor según los siguientes criterios y proporciona comentarios por escrito.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Accordion type="single" collapsible className="w-full" defaultValue={`item-${selectedTeachers[0]}`}>
+              <Accordion type="single" className="w-full" value={activeAccordion} onValueChange={setActiveAccordion}>
                 {availableTeachers
                   .filter(t => selectedTeachers.includes(t.id))
                   .map((teacher) => (
