@@ -140,9 +140,8 @@ export function EvaluationForm({ student }: { student: Student }) {
             variant: "default",
             className: "bg-green-600 text-white border-green-700",
         });
-        fetchData(true); // Reset form only on success
+        fetchData(true);
     } else if (state.message && !state.success) {
-        // This handles other server errors (e.g., database connection issues)
         toast({
             title: "❌ ¡Error!",
             description: state.message,

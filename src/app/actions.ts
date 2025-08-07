@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, collectionGroup } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import type { Evaluation, Grade, Teacher, Student } from "@/lib/types";
 import { getFeedbackSuggestions as getFeedbackSuggestionsAI } from "@/ai/flows/feedback-assistant";
@@ -110,7 +110,7 @@ export async function studentLogin(prevState: any, formData: FormData) {
 
     const studentData = studentSnapshot.docs[0].data() as Student;
     const expires = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
-    cookies().set("student_session", JSON.stringify(studentData), { expires, httpOnly: true });
+    cookies().set("student_session", JSON.stringify({...studentData, id: studentSnapshot.docs[0].id}), { expires, httpOnly: true });
     
     revalidatePath("/evaluation");
     redirect("/evaluation");
@@ -179,7 +179,9 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
         feedback: evaluationData.feedback || "",
         createdAt: serverTimestamp(),
       };
-      batch.push(addDoc(collection(db, "evaluations"), docData));
+      
+      const evaluationCollectionRef = collection(db, "students", student.id, "evaluations");
+      batch.push(addDoc(evaluationCollectionRef, docData));
     });
 
     await Promise.all(batch);
@@ -222,8 +224,15 @@ export async function getTeachers(): Promise<Teacher[]> {
     return teacherList;
 }
 
+export async function getStudents(): Promise<Student[]> {
+    const studentsCollection = collection(db, "students");
+    const studentSnapshot = await getDocs(studentsCollection);
+    const studentList = studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
+    return studentList;
+}
+
 export async function getEvaluations(): Promise<Evaluation[]> {
-    const evaluationsCollection = collection(db, "evaluations");
+    const evaluationsCollection = collectionGroup(db, "evaluations");
     const evaluationSnapshot = await getDocs(evaluationsCollection);
     const evaluationList = evaluationSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -237,8 +246,8 @@ export async function getEvaluations(): Promise<Evaluation[]> {
 }
 
 export async function getEvaluationsByStudent(studentId: string): Promise<Evaluation[]> {
-    const evaluationsCollection = collection(db, "evaluations");
-    const q = query(evaluationsCollection, where("studentId", "==", studentId));
+    const evaluationsCollection = collection(db, `students/${studentId}/evaluations`);
+    const q = query(evaluationsCollection);
     const evaluationSnapshot = await getDocs(q);
     const evaluationList = evaluationSnapshot.docs.map(doc => {
         const data = doc.data();
