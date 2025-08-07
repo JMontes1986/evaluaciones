@@ -12,7 +12,6 @@ export function AppHeader({ studentName }: { studentName?: string}) {
   const pathname = usePathname();
 
   const navLinks = [
-    { href: "/", label: "Inicio" },
     { href: "/evaluation", label: "Evaluación" },
   ];
 
