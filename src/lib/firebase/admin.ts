@@ -7,11 +7,6 @@ import { config } from 'dotenv';
 // Cargar variables de entorno desde .env.local
 config({ path: '.env.local' });
 
-// El SDK de Firebase Admin necesita una cuenta de servicio para autenticarse.
-// Esta información se cargará desde una variable de entorno.
-// En producción (App Hosting), debes establecer el secreto FIREBASE_ADMIN_CONFIG.
-// Para desarrollo local, crea un archivo .env.local y añade la variable.
-
 const serviceAccountString = process.env.FIREBASE_ADMIN_CONFIG;
 
 let adminDb: admin.firestore.Firestore;
@@ -29,6 +24,7 @@ if (serviceAccountString) {
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
             });
+            console.log("Firebase Admin SDK inicializado correctamente.");
         } catch (error: any) {
             console.error(`Error al inicializar Firebase Admin SDK: ${error.message}`);
         }
@@ -38,7 +34,14 @@ if (serviceAccountString) {
     console.warn("La variable de entorno FIREBASE_ADMIN_CONFIG no está definida. Las operaciones de administrador de Firebase no funcionarán.");
     // Proporcionar un objeto 'adminDb' simulado para evitar que la aplicación se bloquee
     // al importar. Las operaciones fallarán en tiempo de ejecución si se intentan.
-    adminDb = {} as admin.firestore.Firestore;
+    adminDb = new Proxy({}, {
+        get(target, prop) {
+            if (prop === 'then') return undefined; // Prevenir que se trate como una promesa
+            throw new Error(
+              `Firebase Admin no está inicializado. Asegúrate de que FIREBASE_ADMIN_CONFIG esté configurada en tu entorno.`
+            );
+        }
+    }) as admin.firestore.Firestore;
 }
 
 export { adminDb };

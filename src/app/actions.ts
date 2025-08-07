@@ -51,7 +51,7 @@ export async function login(prevState: any, formData: FormData) {
   const { username, password } = validatedFields.data;
 
   // WARNING: Hardcoded credentials. In a real-world scenario, use a secure authentication provider.
-  if (username === "administrador" && password === "G3m3ll1.2022*") {
+  if (username === "administrador" && password === "G3m3ll1.2024*") {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     cookies().set("session", "admin_logged_in", { expires, httpOnly: true });
     return redirect("/dashboard");
