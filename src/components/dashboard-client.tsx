@@ -11,7 +11,7 @@ import { Download, BarChart3, Users, Star, GraduationCap } from "lucide-react";
 import type { Evaluation, Teacher, Grade } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
 import { Skeleton } from "./ui/skeleton";
-import { getGrades, getTeachers, getEvaluations } from "@/app/actions";
+import { getDashboardData } from "@/app/actions";
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -23,13 +23,9 @@ export function DashboardClient() {
   const [selectedTeacher, setSelectedTeacher] = useState("all");
 
   useEffect(() => {
-    const fetchEvaluations = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const [evals, gradesData, teachersData] = await Promise.all([
-            getEvaluations(),
-            getGrades(),
-            getTeachers()
-        ]);
+        const { evaluations: evals, grades: gradesData, teachers: teachersData } = await getDashboardData();
         
         setEvaluations(evals);
         setFilteredData(evals);
@@ -43,7 +39,7 @@ export function DashboardClient() {
       }
     };
 
-    fetchEvaluations();
+    fetchDashboardData();
   }, []);
 
   const filterData = useCallback(() => {
@@ -84,12 +80,12 @@ export function DashboardClient() {
         average: getAverageScore(teacherEvals).toFixed(2),
         evaluations: teacherEvals.length
       }
-    }).filter(Boolean);
+    }).filter(Boolean) as { name: string; average: string; evaluations: number }[];
     return teacherData.sort((a,b) => Number(b.average) - Number(a.average));
   }, [filteredData, teachers]);
 
   const gradeAverages = useMemo(() => {
-    return grades.map(grade => {
+    return (grades.map(grade => {
       const gradeEvals = filteredData.filter(e => e.gradeId === grade.id);
        if (gradeEvals.length === 0) return null;
       return {
@@ -97,16 +93,16 @@ export function DashboardClient() {
         average: getAverageScore(gradeEvals).toFixed(2),
         evaluations: gradeEvals.length
       }
-    }).filter(Boolean);
+    }).filter(Boolean) as { name: string; average: string; evaluations: number }[]);
   }, [filteredData, grades]);
   
   const questionAverages = useMemo(() => {
-    return evaluationQuestions.map(q => {
-      const scores = filteredData.map(e => e.scores?.[q.id]).filter(Boolean);
+    return (evaluationQuestions.map(q => {
+      const scores = filteredData.map(e => e.scores?.[q.id]).filter(s => typeof s === 'number');
       if (scores.length === 0) return null;
       const average = scores.reduce((a, b) => a + b, 0) / scores.length;
       return { name: q.text.substring(0, 25) + "...", average: average.toFixed(2) };
-    }).filter(Boolean);
+    }).filter(Boolean) as { name: string; average: string }[]);
   }, [filteredData]);
 
 

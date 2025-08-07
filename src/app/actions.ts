@@ -224,13 +224,6 @@ export async function getTeachers(): Promise<Teacher[]> {
     return teacherList;
 }
 
-export async function getStudents(): Promise<Student[]> {
-    const studentsCollection = collection(db, "students");
-    const studentSnapshot = await getDocs(studentsCollection);
-    const studentList = studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
-    return studentList;
-}
-
 export async function getEvaluations(): Promise<Evaluation[]> {
     const evaluationsCollection = collectionGroup(db, "evaluations");
     const evaluationSnapshot = await getDocs(evaluationsCollection);
@@ -244,6 +237,23 @@ export async function getEvaluations(): Promise<Evaluation[]> {
     });
     return evaluationList;
 }
+
+export async function getDashboardData(): Promise<{evaluations: Evaluation[], grades: Grade[], teachers: Teacher[]}> {
+  try {
+    const [evaluations, grades, teachers] = await Promise.all([
+      getEvaluations(),
+      getGrades(),
+      getTeachers(),
+    ]);
+    return { evaluations, grades, teachers };
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    // En un caso real, podrías querer manejar este error de forma más específica.
+    // Por ahora, devolvemos arrays vacíos para que el dashboard no se rompa.
+    return { evaluations: [], grades: [], teachers: [] };
+  }
+}
+
 
 export async function getEvaluationsByStudent(studentId: string): Promise<Evaluation[]> {
     const evaluationsCollection = collection(db, `students/${studentId}/evaluations`);
@@ -287,3 +297,4 @@ export async function getFeedbackSuggestions(prevState: any, formData: FormData)
     };
   }
 }
+
