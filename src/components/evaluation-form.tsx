@@ -108,23 +108,37 @@ export function EvaluationForm({ student }: { student: Student }) {
   const selectedTeachers = form.watch("teacherIds");
 
   useEffect(() => {
-    if (state.message) {
-      toast({
-        title: state.success ? "✅ ¡Éxito!" : "❌ ¡Error!",
-        description: state.message,
-        variant: state.success ? "default" : "destructive",
-        className: state.success ? "bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600" : ""
-      });
-      if(state.success) {
-        form.reset({
-            teacherIds: [],
-            evaluations: {}
-        });
-      }
-    }
-  }, [state, toast, form, student.gradeId]);
+    if (!state.message) return;
 
-  const handleFormAction = (formData: FormData) => {
+    if (state.success) {
+      toast({
+        title: "✅ ¡Éxito!",
+        description: state.message,
+        variant: "default",
+        className: "bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600",
+      });
+      form.reset({ teacherIds: [], evaluations: {} });
+    } else {
+       toast({
+        title: "❌ ¡Error!",
+        description: state.message,
+        variant: "destructive",
+      });
+    }
+
+  }, [state, toast, form]);
+
+  const handleFormAction = async (formData: FormData) => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      toast({
+        title: "📝 Formulario Incompleto",
+        description: "Por favor, responde todas las preguntas obligatorias antes de enviar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const values = form.getValues();
     formData.append("evaluations", JSON.stringify(values.evaluations));
     formData.append("teacherIds", JSON.stringify(values.teacherIds));
@@ -305,5 +319,3 @@ export function EvaluationForm({ student }: { student: Student }) {
     </FormProvider>
   );
 }
-
-    
