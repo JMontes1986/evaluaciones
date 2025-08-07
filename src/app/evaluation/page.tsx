@@ -2,19 +2,11 @@
 import { EvaluationForm } from "@/components/evaluation-form";
 import { AppHeader } from "@/components/header";
 import { cookies } from "next/headers";
-import type { Student, Teacher, Grade, Evaluation } from "@/lib/types";
+import type { Student, Teacher, Grade } from "@/lib/types";
 import { StudentLogin } from "@/components/student-login";
 import { getGrades, getTeachers, getEvaluationsByStudent } from "@/app/actions";
 
-async function getEvaluationData(student: Student | null) {
-  if (!student) {
-    return {
-      grades: [],
-      availableTeachers: [],
-      studentGradeName: "",
-    };
-  }
-
+async function getEvaluationData(student: Student) {
   try {
     const [gradesData, teachersData, pastEvaluations] = await Promise.all([
       getGrades(),
@@ -33,6 +25,7 @@ async function getEvaluationData(student: Student | null) {
     return { grades: gradesData, availableTeachers, studentGradeName };
   } catch (error) {
     console.error("Error fetching evaluation data on server:", error);
+    // Return empty state but this indicates a server-side data fetching issue
     return { grades: [], availableTeachers: [], studentGradeName: "" };
   }
 }
@@ -40,7 +33,11 @@ async function getEvaluationData(student: Student | null) {
 export default async function EvaluationPage() {
     const studentCookie = cookies().get("student_session")?.value;
     const student: Student | null = studentCookie ? JSON.parse(studentCookie) : null;
-    const { grades, availableTeachers, studentGradeName } = await getEvaluationData(student);
+    
+    let evaluationData = null;
+    if (student) {
+        evaluationData = await getEvaluationData(student);
+    }
 
   return (
     <div className="flex flex-col flex-1">
@@ -51,11 +48,11 @@ export default async function EvaluationPage() {
             <h1 className="text-4xl font-bold font-headline">Evaluación de Profesores</h1>
             <p className="text-muted-foreground mt-2">Tus comentarios son anónimos y ayudan a mejorar nuestra escuela.</p>
           </div>
-          {student ? (
+          {student && evaluationData ? (
             <EvaluationForm 
               student={student} 
-              initialAvailableTeachers={availableTeachers}
-              studentGradeName={studentGradeName}
+              initialAvailableTeachers={evaluationData.availableTeachers}
+              studentGradeName={evaluationData.studentGradeName}
             />
           ) : (
             <StudentLogin />
