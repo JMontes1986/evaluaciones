@@ -64,11 +64,10 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
     },
     mode: 'onChange',
   });
-
-  const selectedTeachers = form.watch("teacherIds");
-
+  
+  const watchedValues = form.watch();
   const isFormSubmittable = useMemo(() => {
-    const { teacherIds, evaluations } = form.getValues();
+    const { teacherIds, evaluations } = watchedValues;
     if (!teacherIds || teacherIds.length === 0) {
       return false;
     }
@@ -80,7 +79,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         return typeof value === 'string' && value.length > 0;
       });
     });
-  }, [form, evaluationQuestions]);
+  }, [watchedValues, evaluationQuestions]);
   
   const onSubmit = (data: EvaluationFormData) => {
     startTransition(async () => {
@@ -100,7 +99,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
           description: result.message || "Ocurrió un error. Por favor, intenta de nuevo.",
           variant: "destructive",
         });
-        const firstInvalidTeacher = selectedTeachers.find(teacherId => {
+        const firstInvalidTeacher = watchedValues.teacherIds.find(teacherId => {
             const evaluation = form.getValues(`evaluations.${teacherId}`);
             return evaluationQuestions.some(q => !evaluation[q.id as keyof typeof evaluation]);
         });
@@ -118,12 +117,12 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
 
 
   useEffect(() => {
-    if (selectedTeachers.length > 0 && !activeAccordion) {
-      setActiveAccordion(`item-${selectedTeachers[0]}`);
-    } else if (selectedTeachers.length === 0) {
+    if (watchedValues.teacherIds.length > 0 && !activeAccordion) {
+      setActiveAccordion(`item-${watchedValues.teacherIds[0]}`);
+    } else if (watchedValues.teacherIds.length === 0) {
       setActiveAccordion("");
     }
-  }, [selectedTeachers, activeAccordion]);
+  }, [watchedValues.teacherIds, activeAccordion]);
   
 
   return (
@@ -202,7 +201,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
             </CardContent>
         </Card>
         
-        {selectedTeachers && selectedTeachers.length > 0 && (
+        {watchedValues.teacherIds && watchedValues.teacherIds.length > 0 && (
           <Card className="shadow-lg animate-in fade-in-50">
             <CardHeader>
               <CardTitle>Proporciona tu Retroalimentación</CardTitle>
@@ -211,7 +210,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
             <CardContent>
               <Accordion type="single" className="w-full" value={activeAccordion} onValueChange={setActiveAccordion}>
                 {availableTeachers
-                  .filter(t => selectedTeachers.includes(t.id))
+                  .filter(t => watchedValues.teacherIds.includes(t.id))
                   .map((teacher) => (
                     <AccordionItem value={`item-${teacher.id}`} key={teacher.id}>
                       <AccordionTrigger className="text-lg hover:no-underline">
@@ -283,7 +282,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
           </Card>
         )}
 
-        {selectedTeachers && selectedTeachers.length > 0 && (
+        {watchedValues.teacherIds && watchedValues.teacherIds.length > 0 && (
           <div className="flex justify-end">
              <Button type="submit" size="lg" disabled={isPending || !isFormSubmittable}>
               {isPending ? "Enviando..." : "Enviar Evaluaciones"} <Send className="ml-2 h-5 w-5" />
