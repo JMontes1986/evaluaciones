@@ -122,12 +122,16 @@ export function EvaluationForm({ student }: { student: Student }) {
     if (state.success) {
         toast({
             title: "✅ ¡Evaluación Enviada!",
-            description: "¡Gracias por tus comentarios! Ayudan a que nuestra escuela sea mejor.",
+            description: "¡Gracias por tus comentarios! Tu opinión nos ayuda a mejorar.",
             variant: "default",
             className: "bg-green-600 text-white border-green-700",
         });
         fetchData(true);
-    } else if (state.message && !state.success && !state.errors) {
+    } else if (state.message && !state.success && state.errors) {
+        // This handles validation errors. We don't toast here.
+        // The form validation UI will handle showing the errors.
+    } else if (state.message && !state.success) {
+        // This handles other server errors (e.g., database connection issues)
         toast({
             title: "❌ ¡Error!",
             description: state.message,
@@ -149,7 +153,6 @@ export function EvaluationForm({ student }: { student: Student }) {
   const handleFormAction = async (formData: FormData) => {
     const isValid = await form.trigger();
     if (!isValid) {
-      // Find the first teacher with an error and open their accordion
       const errors = form.formState.errors.evaluations;
       if (errors) {
         const teacherWithError = selectedTeachers.find(teacherId => errors[teacherId]);
@@ -157,7 +160,7 @@ export function EvaluationForm({ student }: { student: Student }) {
           setActiveAccordion(`item-${teacherWithError}`);
         }
       }
-      return; // Stop the submission
+      return;
     }
 
     const values = form.getValues();
