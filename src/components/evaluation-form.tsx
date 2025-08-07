@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useTransition } from "react";
+import { useState, useEffect, useMemo, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -66,6 +66,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
   });
   
   const watchedValues = form.watch();
+
   const isFormSubmittable = useMemo(() => {
     const { teacherIds, evaluations } = watchedValues;
     if (!teacherIds || teacherIds.length === 0) {
@@ -79,7 +80,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         return typeof value === 'string' && value.length > 0;
       });
     });
-  }, [watchedValues, evaluationQuestions]);
+  }, [watchedValues, evaluationQuestions, form.watch]);
   
   const onSubmit = (data: EvaluationFormData) => {
     startTransition(async () => {
