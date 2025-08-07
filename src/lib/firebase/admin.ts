@@ -4,7 +4,6 @@ import admin from 'firebase-admin';
 import { getApps } from 'firebase-admin/app';
 import { config } from 'dotenv';
 
-// Cargar variables de entorno desde .env.local
 config({ path: '.env.local' });
 
 const serviceAccountString = process.env.FIREBASE_ADMIN_CONFIG;
@@ -17,9 +16,10 @@ if (serviceAccountString) {
         serviceAccount = JSON.parse(serviceAccountString);
     } catch (e) {
         console.error('Error: No se pudo parsear FIREBASE_ADMIN_CONFIG. Asegúrate de que es un JSON válido.', e);
+        throw new Error('FIREBASE_ADMIN_CONFIG no es un JSON válido.');
     }
 
-    if (serviceAccount && !getApps().length) {
+    if (!getApps().length) {
         try {
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
@@ -27,13 +27,13 @@ if (serviceAccountString) {
             console.log("Firebase Admin SDK inicializado correctamente.");
         } catch (error: any) {
             console.error(`Error al inicializar Firebase Admin SDK: ${error.message}`);
+            throw new Error(`Error al inicializar Firebase Admin SDK: ${error.message}`);
         }
     }
     adminDb = admin.firestore();
 } else {
-    console.warn("La variable de entorno FIREBASE_ADMIN_CONFIG no está definida. Las operaciones de administrador de Firebase no funcionarán.");
-    // Proporcionar un objeto 'adminDb' simulado para evitar que la aplicación se bloquee
-    // al importar. Las operaciones fallarán en tiempo de ejecución si se intentan.
+    console.warn("ADVERTENCIA: La variable de entorno FIREBASE_ADMIN_CONFIG no está definida. Las operaciones de base de datos del servidor fallarán. Por favor, configúrala en tu archivo .env.local para el desarrollo.");
+    // Objeto simulado para evitar que la aplicación se bloquee al importar, pero fallará en tiempo de ejecución si se usa.
     adminDb = new Proxy({}, {
         get(target, prop) {
             if (prop === 'then') return undefined; // Prevenir que se trate como una promesa
