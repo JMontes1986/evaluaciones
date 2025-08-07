@@ -7,7 +7,11 @@ import { StudentLogin } from "@/components/student-login";
 import { getGrades, getTeachers, getEvaluationsByStudent } from "@/app/actions";
 import { evaluationQuestions } from "@/lib/types";
 
-async function getEvaluationData(student: Student) {
+async function getEvaluationData(student: Student | null) {
+  if (!student) {
+    return { availableTeachers: [], studentGradeName: "" };
+  }
+
   try {
     const [gradesData, teachersData, pastEvaluations] = await Promise.all([
       getGrades(),
@@ -26,6 +30,7 @@ async function getEvaluationData(student: Student) {
     return { availableTeachers, studentGradeName };
   } catch (error) {
     console.error("Error fetching evaluation data on server:", error);
+    // Devuelve un estado seguro en caso de error para no bloquear la renderización
     return { availableTeachers: [], studentGradeName: "" };
   }
 }
@@ -34,14 +39,7 @@ export default async function EvaluationPage() {
     const studentCookie = cookies().get("student_session")?.value;
     const student: Student | null = studentCookie ? JSON.parse(studentCookie) : null;
     
-    let evaluationData = {
-        availableTeachers: [] as Teacher[],
-        studentGradeName: "",
-    };
-
-    if (student) {
-        evaluationData = await getEvaluationData(student);
-    }
+    const { availableTeachers, studentGradeName } = await getEvaluationData(student);
 
   return (
     <div className="flex flex-col flex-1">
@@ -55,8 +53,8 @@ export default async function EvaluationPage() {
           {student ? (
             <EvaluationForm 
               student={student} 
-              initialAvailableTeachers={evaluationData.availableTeachers}
-              studentGradeName={evaluationData.studentGradeName}
+              initialAvailableTeachers={availableTeachers}
+              studentGradeName={studentGradeName}
               evaluationQuestions={evaluationQuestions}
             />
           ) : (
@@ -67,5 +65,3 @@ export default async function EvaluationPage() {
     </div>
   );
 }
-
-    

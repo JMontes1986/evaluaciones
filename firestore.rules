@@ -1,21 +1,11 @@
+
 rules_version = '2';
 
-// Las reglas de seguridad de Firestore te permiten controlar el acceso a los documentos
-// y colecciones en tu base de datos.
-//
-// La configuración predeterminada permite que todos los usuarios autenticados lean y escriban
-// en cualquier parte de tu base de datos. Esto es útil para empezar, pero es
-// importante actualizar estas reglas a medida que desarrollas tu aplicación para
-// prevenir accesos no deseados y mantener tus datos seguros.
-//
-// Para más información sobre cómo escribir reglas de seguridad, visita la documentación
-// en https://firebase.google.com/docs/firestore/security/get-started
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // REGLA PREDETERMINADA: Denegar todo el acceso de lectura y escritura por defecto.
-    // Todas las operaciones de la base de datos deben realizarse a través de acciones de servidor seguras
-    // que utilizan el SDK de Firebase Admin y omiten estas reglas.
+    // Denegar todas las lecturas y escrituras desde el cliente.
+    // Todo el acceso a los datos debe realizarse a través de las acciones del servidor
+    // utilizando el Firebase Admin SDK.
     match /{document=**} {
       allow read, write: if false;
     }
