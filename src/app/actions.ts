@@ -104,27 +104,20 @@ export async function studentLogout() {
   redirect("/evaluation");
 }
 
+type EvaluationFormData = z.infer<typeof evaluationSchema>;
 
-export async function submitEvaluation(prevState: any, formData: FormData) {
+export async function submitEvaluation(data: EvaluationFormData) {
   const studentSession = cookies().get("student_session")?.value;
 
   if (!studentSession) {
     return {
       success: false,
       message: "No se ha encontrado una sesión de estudiante. Por favor, inicia sesión de nuevo.",
-      errors: null,
     };
   }
-
   const student: Student = JSON.parse(studentSession);
-
-  // The form now sends JSON strings, so we parse them.
-  const rawData = {
-    teacherIds: JSON.parse(formData.get("teacherIds") as string),
-    evaluations: JSON.parse(formData.get("evaluations") as string)
-  };
   
-  const validatedFields = evaluationSchema.safeParse(rawData);
+  const validatedFields = evaluationSchema.safeParse(data);
 
   if (!validatedFields.success) {
     return {
@@ -140,10 +133,9 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     const batch = adminDb.batch();
     const evaluationCollectionRef = adminDb.collection("evaluations");
 
-    // Iterate over the selected teachers who have data.
     teacherIds.forEach((teacherId) => {
         const evaluationData = evaluations[teacherId];
-        if (!evaluationData) return; // Skip if there's no data for this teacher.
+        if (!evaluationData) return;
 
         const scores = Object.fromEntries(
             Object.entries(evaluationData)
@@ -151,7 +143,6 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
             .map(([key, value]) => [key, Number(value)])
         );
 
-        // Create a new document reference for each evaluation in the root 'evaluations' collection.
         const newEvalRef = evaluationCollectionRef.doc();
 
         const docData: Omit<Evaluation, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
@@ -174,7 +165,6 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     return {
       success: true,
       message: "¡Evaluación enviada con éxito!",
-      errors: null,
     };
 
   } catch (error) {
@@ -182,7 +172,6 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     return {
       success: false,
       message: "Ocurrió un error al guardar tu evaluación en la base de datos. Por favor, inténtalo de nuevo más tarde.",
-      errors: null,
     };
   }
 }
@@ -208,7 +197,7 @@ export async function getTeachers(): Promise<Teacher[]> {
 
 export async function getStudents(): Promise<Student[]> {
   const studentsCollection = adminDb.collection("students");
-  const studentSnapshot = await studentsCollection.get();
+  const studentSnapshot = await studentCollection.get();
   return studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
 }
 

@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useState, useEffect, useMemo, useRef, useTransition } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Teacher, Student } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 import { Send, User } from "lucide-react";
-import { useActionState } from "react";
 import { submitEvaluation } from "@/app/actions";
-import { Skeleton } from "./ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-
-
-const initialState = {
-  success: false,
-  message: "",
-  errors: null,
-};
 
 const ratingOptions = [
     { value: "4", label: "SIEMPRE" },
@@ -45,9 +35,8 @@ interface EvaluationFormProps {
 export function EvaluationForm({ student, initialAvailableTeachers, studentGradeName, evaluationQuestions }: EvaluationFormProps) {
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>(initialAvailableTeachers);
   const { toast } = useToast();
-  const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
+  const [isPending, startTransition] = useTransition();
   const [activeAccordion, setActiveAccordion] = useState<string>("");
-  const formRef = useRef<HTMLFormElement>(null);
   
   const evaluationSchema = useMemo(() => z.object({
     teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
@@ -77,40 +66,39 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
   });
 
   const selectedTeachers = form.watch("teacherIds");
-  const formValues = form.watch();
 
   const isFormSubmittable = useMemo(() => {
-    if (!formValues.teacherIds || formValues.teacherIds.length === 0) {
+    const { teacherIds, evaluations } = form.getValues();
+    if (!teacherIds || teacherIds.length === 0) {
       return false;
     }
-    return formValues.teacherIds.every(teacherId => {
-      const teacherEval = formValues.evaluations?.[teacherId];
+    return teacherIds.every(teacherId => {
+      const teacherEval = evaluations?.[teacherId];
       if (!teacherEval) return false;
       return evaluationQuestions.every(q => {
         const value = teacherEval[q.id as keyof typeof teacherEval];
         return typeof value === 'string' && value.length > 0;
       });
     });
-  }, [formValues, evaluationQuestions]);
+  }, [form, evaluationQuestions]);
   
-  useEffect(() => {
-    if (isPending) return;
+  const onSubmit = (data: EvaluationFormData) => {
+    startTransition(async () => {
+      const result = await submitEvaluation(data);
 
-    if (state.success) {
-      toast({
-        title: "✅ ¡Evaluación Enviada!",
-        description: "¡Gracias por tus comentarios! Tu opinión nos ayuda a mejorar.",
-        variant: "default",
-        className: "bg-green-600 text-white border-green-700",
-      });
-      // Forzar una recarga completa para limpiar el estado y obtener nuevos datos del servidor
-      window.location.reload(); 
-
-    } else if (state.message && !state.success && form.formState.isSubmitted) {
+      if (result.success) {
         toast({
-            title: "❌ ¡Error!",
-            description: state.message,
-            variant: "destructive",
+          title: "✅ ¡Evaluación Enviada!",
+          description: "¡Gracias por tus comentarios! Tu opinión nos ayuda a mejorar.",
+          variant: "default",
+          className: "bg-green-600 text-white border-green-700",
+        });
+        window.location.reload(); 
+      } else {
+        toast({
+          title: "❌ ¡Error!",
+          description: result.message || "Ocurrió un error. Por favor, intenta de nuevo.",
+          variant: "destructive",
         });
         const firstInvalidTeacher = selectedTeachers.find(teacherId => {
             const evaluation = form.getValues(`evaluations.${teacherId}`);
@@ -120,8 +108,9 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         if (firstInvalidTeacher && activeAccordion !== `item-${firstInvalidTeacher}`) {
             setActiveAccordion(`item-${firstInvalidTeacher}`);
         }
-    }
-  }, [state, isPending, form.formState.isSubmitted, form, toast, selectedTeachers, activeAccordion, evaluationQuestions]);
+      }
+    });
+  };
 
   useEffect(() => {
     setAvailableTeachers(initialAvailableTeachers);
@@ -135,19 +124,11 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
       setActiveAccordion("");
     }
   }, [selectedTeachers, activeAccordion]);
-
-  const handleFormAction = (formData: FormData) => {
-    const values = form.getValues();
-    // This is crucial: we serialize the objects into JSON strings before sending
-    formData.append("evaluations", JSON.stringify(values.evaluations));
-    formData.append("teacherIds", JSON.stringify(values.teacherIds));
-    formAction(formData);
-  };
   
 
   return (
-    <FormProvider {...form}>
-      <form ref={formRef} action={handleFormAction} className="space-y-8">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Hola, {student.name}</CardTitle>
@@ -310,6 +291,6 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
           </div>
         )}
       </form>
-    </FormProvider>
+    </Form>
   );
 }
