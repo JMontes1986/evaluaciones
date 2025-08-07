@@ -2,13 +2,45 @@
 import { EvaluationForm } from "@/components/evaluation-form";
 import { AppHeader } from "@/components/header";
 import { cookies } from "next/headers";
-import type { Student } from "@/lib/types";
+import type { Student, Teacher, Grade, Evaluation } from "@/lib/types";
 import { StudentLogin } from "@/components/student-login";
+import { getGrades, getTeachers, getEvaluationsByStudent } from "@/app/actions";
 
+async function getEvaluationData(student: Student | null) {
+  if (!student) {
+    return {
+      grades: [],
+      availableTeachers: [],
+      studentGradeName: "",
+    };
+  }
 
-export default function EvaluationPage() {
+  try {
+    const [gradesData, teachersData, pastEvaluations] = await Promise.all([
+      getGrades(),
+      getTeachers(),
+      getEvaluationsByStudent(student.id),
+    ]);
+
+    const evaluatedTeacherIds = new Set(pastEvaluations.map(e => e.teacherId));
+    
+    const availableTeachers = teachersData.filter((t) => 
+        t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
+    );
+
+    const studentGradeName = gradesData.find(g => g.id === student.gradeId)?.name || "";
+
+    return { grades: gradesData, availableTeachers, studentGradeName };
+  } catch (error) {
+    console.error("Error fetching evaluation data on server:", error);
+    return { grades: [], availableTeachers: [], studentGradeName: "" };
+  }
+}
+
+export default async function EvaluationPage() {
     const studentCookie = cookies().get("student_session")?.value;
     const student: Student | null = studentCookie ? JSON.parse(studentCookie) : null;
+    const { grades, availableTeachers, studentGradeName } = await getEvaluationData(student);
 
   return (
     <div className="flex flex-col flex-1">
@@ -20,7 +52,11 @@ export default function EvaluationPage() {
             <p className="text-muted-foreground mt-2">Tus comentarios son anónimos y ayudan a mejorar nuestra escuela.</p>
           </div>
           {student ? (
-            <EvaluationForm student={student} />
+            <EvaluationForm 
+              student={student} 
+              initialAvailableTeachers={availableTeachers}
+              studentGradeName={studentGradeName}
+            />
           ) : (
             <StudentLogin />
           )}

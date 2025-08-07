@@ -12,12 +12,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import type { Teacher, Grade, Student, Evaluation } from "@/lib/types";
+import type { Teacher, Student } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 import { Send, User } from "lucide-react";
 import { useActionState } from "react";
-import { submitEvaluation, getGrades, getTeachers, getEvaluationsByStudent } from "@/app/actions";
+import { submitEvaluation, getTeachers, getEvaluationsByStudent } from "@/app/actions";
 import { Skeleton } from "./ui/skeleton";
 import { FeedbackAssistant } from "./feedback-assistant";
 import { cn } from "@/lib/utils";
@@ -53,22 +53,20 @@ const ratingOptions = [
     { value: "1", label: "NUNCA" },
 ];
 
-export function EvaluationForm({ student }: { student: Student }) {
-  const [grades, setGrades] = useState<Grade[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
+interface EvaluationFormProps {
+  student: Student;
+  initialAvailableTeachers: Teacher[];
+  studentGradeName?: string;
+}
+
+export function EvaluationForm({ student, initialAvailableTeachers, studentGradeName }: EvaluationFormProps) {
+  const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>(initialAvailableTeachers);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
   const [activeAccordion, setActiveAccordion] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
   
-  const studentGradeName = useMemo(() => {
-    if (!grades || grades.length === 0) return "";
-    return grades.find(g => g.id === student.gradeId)?.name;
-  }, [grades, student.gradeId]);
-
-
   const form = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationSchema),
     defaultValues: {
@@ -95,20 +93,15 @@ export function EvaluationForm({ student }: { student: Student }) {
     });
   }, [formValues]);
   
-  async function fetchData(forceReset: boolean = false) {
+  async function refetchTeachers(forceReset: boolean = false) {
     setLoading(true);
     try {
-      const [gradesData, teachersData, pastEvaluations] = await Promise.all([
-        getGrades(),
+      const [allTeachers, pastEvaluations] = await Promise.all([
         getTeachers(),
         getEvaluationsByStudent(student.id),
       ]);
-      setGrades(gradesData);
-      setTeachers(teachersData);
-
       const evaluatedTeacherIds = new Set(pastEvaluations.map(e => e.teacherId));
-      
-      const teachersForGrade = teachersData.filter((t) => 
+      const teachersForGrade = allTeachers.filter((t) => 
           t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
       );
       setAvailableTeachers(teachersForGrade);
@@ -119,10 +112,10 @@ export function EvaluationForm({ student }: { student: Student }) {
       }
 
     } catch (error) {
-      console.error("Error fetching initial data:", error);
+      console.error("Error refetching teachers:", error);
       toast({
         title: "❌ ¡Error!",
-        description: "No se pudieron cargar los datos. Inténtalo de nuevo más tarde.",
+        description: "No se pudieron recargar los datos. Por favor, refresca la página.",
         variant: "destructive",
       });
     } finally {
@@ -132,26 +125,32 @@ export function EvaluationForm({ student }: { student: Student }) {
 
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (isPending) return;
 
-  useEffect(() => {
-    if (!isPending && state.success) {
+    if (state.success) {
       toast({
         title: "✅ ¡Evaluación Enviada!",
         description: "¡Gracias por tus comentarios! Tu opinión nos ayuda a mejorar.",
         variant: "default",
         className: "bg-green-600 text-white border-green-700",
       });
-      fetchData(true);
-    } else if (!isPending && state.message && !state.success) {
-      toast({
-        title: "❌ ¡Error!",
-        description: state.message,
-        variant: "destructive",
-      });
+      refetchTeachers(true);
+    } else if (state.message && !state.success && form.formState.isSubmitted) {
+        toast({
+            title: "❌ ¡Error!",
+            description: state.message,
+            variant: "destructive",
+        });
+        const firstInvalidTeacher = selectedTeachers.find(teacherId => {
+            const evaluation = form.getValues(`evaluations.${teacherId}`);
+            return evaluationQuestions.some(q => !evaluation[q.id as keyof typeof evaluation]);
+        });
+
+        if (firstInvalidTeacher && activeAccordion !== `item-${firstInvalidTeacher}`) {
+            setActiveAccordion(`item-${firstInvalidTeacher}`);
+        }
     }
-  }, [state, isPending]);
+  }, [state, isPending, form.formState.isSubmitted]);
 
   useEffect(() => {
     if (selectedTeachers.length > 0 && !activeAccordion) {
@@ -180,6 +179,9 @@ export function EvaluationForm({ student }: { student: Student }) {
                     <Skeleton className="h-10 w-full" />
                 </CardContent>
             </Card>
+             <div className="flex justify-center items-center p-8">
+                 <p className="text-muted-foreground">Actualizando lista de profesores...</p>
+             </div>
         </div>
      )
   }
@@ -223,7 +225,6 @@ export function EvaluationForm({ student }: { student: Student }) {
                                       delete currentEvals[teacher.id];
                                       form.setValue("evaluations", currentEvals);
                                     } else {
-                                        // Initialize evaluation object for the new teacher
                                         const currentEvals = form.getValues("evaluations");
                                         form.setValue("evaluations", {
                                             ...currentEvals,
