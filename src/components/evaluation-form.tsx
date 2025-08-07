@@ -131,11 +131,7 @@ export function EvaluationForm({ student }: { student: Student }) {
   const handleFormAction = async (formData: FormData) => {
     const isValid = await form.trigger();
     if (!isValid) {
-      toast({
-        title: "📝 Formulario Incompleto",
-        description: "Por favor, responde todas las preguntas obligatorias antes de enviar.",
-        variant: "destructive"
-      });
+      // Don't submit, the form will show validation errors
       return;
     }
 
