@@ -1,15 +1,14 @@
-
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
 import { getApps } from 'firebase-admin/app';
 import { config } from 'dotenv';
 
+// Carga las variables de entorno desde .env.local
 config({ path: '.env.local' });
 
 const serviceAccountString = process.env.FIREBASE_ADMIN_CONFIG;
 
-let adminDb: admin.firestore.Firestore;
-
+// Solo inicializa la app si no ha sido inicializada y si las credenciales existen.
 if (getApps().length === 0 && serviceAccountString) {
     try {
         const serviceAccount = JSON.parse(serviceAccountString);
@@ -18,22 +17,23 @@ if (getApps().length === 0 && serviceAccountString) {
         });
         console.log("Firebase Admin SDK inicializado correctamente.");
     } catch (error: any) {
-        console.error(`Error al inicializar Firebase Admin SDK: ${error.message}`);
-        // No lances un error aquí para evitar que la app se bloquee si el JSON es inválido
+        console.error("Error crítico al inicializar Firebase Admin SDK. Verifica el contenido de FIREBASE_ADMIN_CONFIG en tu .env.local:", error.message);
     }
 }
 
+// Exporta la instancia de la base de datos solo si la app fue inicializada.
+// Si no, exporta un objeto que lanzará un error claro si se intenta usar.
+let adminDb: admin.firestore.Firestore;
 if (admin.apps.length > 0) {
     adminDb = admin.firestore();
 } else {
-    console.warn("ADVERTENCIA: La variable de entorno FIREBASE_ADMIN_CONFIG no está definida o es inválida. Las operaciones de base de datos del servidor fallarán. Por favor, configúrala en tu archivo .env.local para el desarrollo.");
-    // Objeto simulado para evitar que la aplicación se bloquee al importar, pero fallará en tiempo de ejecución si se usa.
+    // Si estás viendo este error en producción, asegúrate de haber configurado los secretos en App Hosting.
+    // Si lo ves en desarrollo, asegúrate de que tu archivo .env.local existe y tiene las credenciales correctas.
+    console.warn("ADVERTENCIA: Firebase Admin no está inicializado. Las operaciones de base de datos del servidor fallarán.");
     adminDb = new Proxy({}, {
         get(target, prop) {
-            if (prop === 'then') return undefined; // Prevenir que se trate como una promesa
-            throw new Error(
-              `Firebase Admin no está inicializado. Asegúrate de que FIREBASE_ADMIN_CONFIG esté configurada en tu entorno.`
-            );
+            if (prop === 'then') return undefined;
+            throw new Error(`Firebase Admin no está inicializado. Asegúrate de que FIREBASE_ADMIN_CONFIG esté configurada en tu entorno.`);
         }
     }) as admin.firestore.Firestore;
 }
