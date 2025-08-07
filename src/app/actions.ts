@@ -118,14 +118,16 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
 
   const student: Student = JSON.parse(studentSession);
 
+  // Extraer los datos del formulario directamente.
   const rawData = {
     teacherIds: JSON.parse(formData.get("teacherIds") as string),
     evaluations: JSON.parse(formData.get("evaluations") as string)
   };
-
+  
   const validatedFields = evaluationSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
+    console.error("Validation failed:", validatedFields.error.flatten());
     return {
       success: false,
       message: "La validación falló. Por favor, revisa tus respuestas.",
@@ -139,27 +141,30 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     const batch = adminDb.batch();
     const evaluationCollectionRef = adminDb.collection("evaluations");
 
-    Object.entries(evaluations).forEach(([teacherId, evaluationData]) => {
-      if (!teacherIds.includes(teacherId)) return;
+    // Iterar solo sobre los profesores seleccionados que tienen datos.
+    teacherIds.forEach((teacherId) => {
+        const evaluationData = evaluations[teacherId];
+        if (!evaluationData) return; // Si no hay datos para este profesor, saltar.
 
-      const scores = Object.fromEntries(
-        Object.entries(evaluationData)
-          .filter(([key]) => key.startsWith("q"))
-          .map(([key, value]) => [key, Number(value)])
-      );
+        const scores = Object.fromEntries(
+            Object.entries(evaluationData)
+            .filter(([key]) => key.startsWith("q"))
+            .map(([key, value]) => [key, Number(value)])
+        );
 
-      const newEvalRef = evaluationCollectionRef.doc();
+        // Crear una nueva referencia de documento para cada evaluación en la colección raíz 'evaluations'.
+        const newEvalRef = evaluationCollectionRef.doc();
 
-      const docData = {
-        gradeId: student.gradeId,
-        teacherId,
-        studentId: student.id,
-        scores,
-        feedback: evaluationData.feedback || "",
-        createdAt: FieldValue.serverTimestamp(),
-      };
+        const docData: Omit<Evaluation, 'id' | 'createdAt'> & { createdAt: FieldValue } = {
+            gradeId: student.gradeId,
+            teacherId,
+            studentId: student.id,
+            scores,
+            feedback: evaluationData.feedback || "",
+            createdAt: FieldValue.serverTimestamp(),
+        };
       
-      batch.set(newEvalRef, docData);
+        batch.set(newEvalRef, docData);
     });
 
     await batch.commit();
@@ -174,10 +179,10 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     };
 
   } catch (error) {
-    console.error("Error submitting evaluation:", error);
+    console.error("Error submitting evaluation to Firestore:", error);
     return {
       success: false,
-      message: "Ocurrió un error al guardar tu evaluación. Por favor, inténtalo de nuevo más tarde.",
+      message: "Ocurrió un error al guardar tu evaluación en la base de datos. Por favor, inténtalo de nuevo más tarde.",
       errors: null,
     };
   }
@@ -253,4 +258,3 @@ export async function getEvaluationsByStudent(studentId: string): Promise<Evalua
     });
     return evaluationList;
 }
-
