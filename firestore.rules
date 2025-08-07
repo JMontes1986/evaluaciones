@@ -1,10 +1,10 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Deny all client-side access by default.
-    // Your application should rely on server-side logic (Next.js Server Actions)
-    // to interact with the database, which bypasses these rules.
+    // Deny all client-side reads and writes by default.
+    // Server-side operations using Admin SDK will bypass these rules.
     match /{document=**} {
       allow read, write: if false;
     }
