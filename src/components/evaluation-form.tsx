@@ -48,8 +48,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
   const [state, formAction, isPending] = useActionState(submitEvaluation, initialState);
   const [activeAccordion, setActiveAccordion] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
-  const router = useRouter();
-
+  
   const evaluationSchema = useMemo(() => z.object({
     teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
     evaluations: z.record(
@@ -104,9 +103,8 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         variant: "default",
         className: "bg-green-600 text-white border-green-700",
       });
-      router.refresh();
-      form.reset({ teacherIds: [], evaluations: {} });
-      setActiveAccordion("");
+      // Forzar una recarga completa para limpiar el estado y obtener nuevos datos del servidor
+      window.location.reload(); 
 
     } else if (state.message && !state.success && form.formState.isSubmitted) {
         toast({
@@ -123,7 +121,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
             setActiveAccordion(`item-${firstInvalidTeacher}`);
         }
     }
-  }, [state, isPending, form.formState.isSubmitted, router, form, toast, selectedTeachers, activeAccordion, evaluationQuestions]);
+  }, [state, isPending, form.formState.isSubmitted, form, toast, selectedTeachers, activeAccordion, evaluationQuestions]);
 
   useEffect(() => {
     setAvailableTeachers(initialAvailableTeachers);

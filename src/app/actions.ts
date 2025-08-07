@@ -126,7 +126,6 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
   const validatedFields = evaluationSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
-    console.error(validatedFields.error.flatten().fieldErrors);
     return {
       success: false,
       message: "La validación falló. Por favor, revisa tus respuestas.",
