@@ -18,7 +18,6 @@ import { Send, User } from "lucide-react";
 import { useActionState } from "react";
 import { submitEvaluation } from "@/app/actions";
 import { Skeleton } from "./ui/skeleton";
-import { FeedbackAssistant } from "./feedback-assistant";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
@@ -285,12 +284,13 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
                           render={({ field }) => (
                             <FormItem className="space-y-2 rounded-lg border p-4">
                               <FormLabel className="text-base">Observaciones (Opcional)</FormLabel>
-                                <FeedbackAssistant
-                                    control={form.control}
-                                    name={`evaluations.${teacher.id}.feedback`}
-                                    getValues={form.getValues}
-                                    setValue={form.setValue}
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Proporciona observaciones detalladas y constructivas aquí..."
+                                  className="min-h-[120px] resize-y"
+                                  {...field}
                                 />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}

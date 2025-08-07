@@ -6,7 +6,6 @@ import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import type { Evaluation, Grade, Teacher, Student } from "@/lib/types";
-import { getFeedbackSuggestions as getFeedbackSuggestionsAI } from "@/ai/flows/feedback-assistant";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { evaluationQuestions } from "@/lib/types";
@@ -249,32 +248,4 @@ export async function getEvaluationsByStudent(studentId: string): Promise<Evalua
         } as Evaluation
     });
     return evaluationList;
-}
-
-
-export async function getFeedbackSuggestions(prevState: any, formData: FormData) {
-  const evaluationText = formData.get("evaluationText") as string;
-  if (!evaluationText || evaluationText.trim().length < 10) {
-    return {
-      success: false,
-      message: "Por favor, introduce un texto de evaluación más largo para obtener sugerencias.",
-      suggestions: null,
-    };
-  }
-
-  try {
-    const result = await getFeedbackSuggestionsAI({ evaluationText });
-    return {
-      success: true,
-      message: "Sugerencias generadas con éxito.",
-      suggestions: result.suggestions,
-    };
-  } catch (error) {
-    console.error("Error getting feedback suggestions:", error);
-    return {
-      success: false,
-      message: "No se pudieron generar sugerencias. Inténtalo de nuevo.",
-      suggestions: null,
-    };
-  }
 }
