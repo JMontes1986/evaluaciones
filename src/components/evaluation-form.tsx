@@ -75,43 +75,50 @@ export function EvaluationForm({ student }: { student: Student }) {
   });
 
   const selectedTeachers = form.watch("teacherIds");
+  
+  async function fetchData(forceReset: boolean = false) {
+    setLoading(true);
+    try {
+      const [gradesData, teachersData, pastEvaluations] = await Promise.all([
+        getGrades(),
+        getTeachers(),
+        getEvaluationsByStudent(student.id),
+      ]);
+      setGrades(gradesData);
+      setTeachers(teachersData);
+
+      const evaluatedTeacherIds = new Set(pastEvaluations.map(e => e.teacherId));
+      
+      const teachersForGrade = teachersData.filter((t) => 
+          t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
+      );
+      setAvailableTeachers(teachersForGrade);
+      
+      if (forceReset) {
+          form.reset({ teacherIds: [], evaluations: {} });
+          setActiveAccordion("");
+      }
+
+    } catch (error) {
+      console.error("Error fetching initial data:", error);
+      toast({
+        title: "❌ ¡Error!",
+        description: "No se pudieron cargar los datos. Inténtalo de nuevo más tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
   useEffect(() => {
-    async function fetchData(forceReset: boolean = false) {
-      setLoading(true);
-      try {
-        const [gradesData, teachersData, pastEvaluations] = await Promise.all([
-          getGrades(),
-          getTeachers(),
-          getEvaluationsByStudent(student.id),
-        ]);
-        setGrades(gradesData);
-        setTeachers(teachersData);
+    fetchData();
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-        const evaluatedTeacherIds = new Set(pastEvaluations.map(e => e.teacherId));
-        
-        const teachersForGrade = teachersData.filter((t) => 
-            t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
-        );
-        setAvailableTeachers(teachersForGrade);
-        
-        if (forceReset) {
-            form.reset({ teacherIds: [], evaluations: {} });
-            setActiveAccordion("");
-        }
 
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
-        toast({
-          title: "❌ ¡Error!",
-          description: "No se pudieron cargar los datos. Inténtalo de nuevo más tarde.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-
+  useEffect(() => {
     if (state.success) {
         toast({
             title: "✅ ¡Evaluación Enviada!",
@@ -120,16 +127,15 @@ export function EvaluationForm({ student }: { student: Student }) {
             className: "bg-green-600 text-white border-green-700",
         });
         fetchData(true);
-    } else if (state.message && !state.errors) {
+    } else if (state.message && !state.success && !state.errors) {
         toast({
             title: "❌ ¡Error!",
             description: state.message,
             variant: "destructive",
         });
     }
-
-    fetchData();
-  }, [state.success, state.message, state.errors, toast, student.gradeId, student.id, form]);
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
 
   useEffect(() => {
