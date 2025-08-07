@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 const serviceAccountString = process.env.FIREBASE_ADMIN_CONFIG;
+let adminDb: admin.firestore.Firestore;
 
 // Solo inicializa la app si no ha sido inicializada y si las credenciales existen.
 if (getApps().length === 0 && serviceAccountString) {
@@ -21,21 +22,11 @@ if (getApps().length === 0 && serviceAccountString) {
     }
 }
 
-// Exporta la instancia de la base de datos solo si la app fue inicializada.
-// Si no, exporta un objeto que lanzará un error claro si se intenta usar.
-let adminDb: admin.firestore.Firestore;
 if (admin.apps.length > 0) {
     adminDb = admin.firestore();
 } else {
-    // Si estás viendo este error en producción, asegúrate de haber configurado los secretos en App Hosting.
-    // Si lo ves en desarrollo, asegúrate de que tu archivo .env.local existe y tiene las credenciales correctas.
-    console.warn("ADVERTENCIA: Firebase Admin no está inicializado. Las operaciones de base de datos del servidor fallarán.");
-    adminDb = new Proxy({}, {
-        get(target, prop) {
-            if (prop === 'then') return undefined;
-            throw new Error(`Firebase Admin no está inicializado. Asegúrate de que FIREBASE_ADMIN_CONFIG esté configurada en tu entorno.`);
-        }
-    }) as admin.firestore.Firestore;
+    console.warn("ADVERTENCIA: Firebase Admin no está inicializado. Las operaciones de base de datos del servidor fallarán. Asegúrate de que FIREBASE_ADMIN_CONFIG esté configurado en tu archivo .env.local");
 }
 
+// Exporta la instancia de la base de datos o undefined si no se pudo inicializar.
 export { adminDb };
