@@ -37,7 +37,6 @@ const evaluationQuestions = [
 ];
 
 const evaluationSchema = z.object({
-  gradeId: z.string().min(1, "Por favor, selecciona un grado."),
   teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
   evaluations: z.record(
     z.string(),
@@ -131,22 +130,24 @@ export async function studentLogout() {
 
 
 export async function submitEvaluation(prevState: any, formData: FormData) {
+  const studentSession = cookies().get("student_session")?.value;
+
+  if (!studentSession) {
+    return {
+      success: false,
+      message: "No se ha encontrado una sesión de estudiante. Por favor, inicia sesión de nuevo.",
+      errors: null,
+    };
+  }
+
+  const student: Student = JSON.parse(studentSession);
+
   const rawData = {
-    gradeId: formData.get("gradeId"),
     teacherIds: JSON.parse(formData.get("teacherIds") as string),
     evaluations: JSON.parse(formData.get("evaluations") as string)
   };
 
   const validatedFields = evaluationSchema.safeParse(rawData);
-  const studentSession = cookies().get("student_session")?.value;
-
-  if (!studentSession) {
-      return {
-          success: false,
-          message: "No se ha encontrado una sesión de estudiante. Por favor, inicia sesión de nuevo.",
-          errors: null,
-      }
-  }
 
   if (!validatedFields.success) {
     console.error(validatedFields.error.flatten().fieldErrors);
@@ -157,9 +158,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
     };
   }
 
-  const { gradeId, teacherIds, evaluations } = validatedFields.data;
-  const student = JSON.parse(studentSession);
-
+  const { teacherIds, evaluations } = validatedFields.data;
 
   try {
     const batch: Promise<any>[] = [];
@@ -173,7 +172,7 @@ export async function submitEvaluation(prevState: any, formData: FormData) {
       );
 
       const docData = {
-        gradeId,
+        gradeId: student.gradeId,
         teacherId,
         studentId: student.id,
         scores,

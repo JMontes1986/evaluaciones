@@ -22,7 +22,6 @@ import { Skeleton } from "./ui/skeleton";
 import { FeedbackAssistant } from "./feedback-assistant";
 
 const evaluationSchema = z.object({
-  gradeId: z.string().min(1, "El ID de grado es requerido."),
   teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
   evaluations: z.record(
     z.string(),
@@ -68,7 +67,6 @@ export function EvaluationForm({ student }: { student: Student }) {
   const form = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationSchema),
     defaultValues: {
-      gradeId: student.gradeId,
       teacherIds: [],
       evaluations: {},
     },
@@ -118,7 +116,6 @@ export function EvaluationForm({ student }: { student: Student }) {
       });
       if(state.success) {
         form.reset({
-            gradeId: student.gradeId,
             teacherIds: [],
             evaluations: {}
         });
@@ -128,7 +125,6 @@ export function EvaluationForm({ student }: { student: Student }) {
 
   const handleFormAction = (formData: FormData) => {
     const values = form.getValues();
-    formData.append("gradeId", values.gradeId);
     formData.append("evaluations", JSON.stringify(values.evaluations));
     formData.append("teacherIds", JSON.stringify(values.teacherIds));
     formAction(formData);
