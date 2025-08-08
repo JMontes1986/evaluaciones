@@ -100,12 +100,9 @@ export async function studentLogout() {
 type EvaluationFormData = z.infer<typeof evaluationSchema>;
 
 export async function submitEvaluation(data: EvaluationFormData) {
-  console.log("Iniciando submitEvaluation con datos:", JSON.stringify(data, null, 2));
-
   const validatedFields = evaluationSchema.safeParse(data);
 
   if (!validatedFields.success) {
-    console.error("Falló la validación del servidor:", validatedFields.error.flatten());
     return {
       success: false,
       message: "La validación falló. Por favor, revisa tus respuestas.",
@@ -117,21 +114,17 @@ export async function submitEvaluation(data: EvaluationFormData) {
   
   const studentDoc = await adminDb.collection("students").doc(studentId).get();
   if (!studentDoc.exists) {
-      console.error(`Estudiante no encontrado con ID: ${studentId}`);
       return { success: false, message: "No se pudo encontrar la información del estudiante." };
   }
   const student = studentDoc.data() as Student;
-  console.log(`Estudiante encontrado: ${student.name}`);
 
   try {
     const batch = adminDb.batch();
     const evaluationCollectionRef = adminDb.collection("evaluations");
-    console.log(`Procesando evaluaciones para ${teacherIds.length} profesor(es).`);
 
     teacherIds.forEach((teacherId) => {
         const evaluationData = evaluations[teacherId];
         if (!evaluationData) {
-            console.warn(`No se encontraron datos de evaluación para el profesor con ID: ${teacherId}`);
             return;
         }
 
@@ -153,11 +146,9 @@ export async function submitEvaluation(data: EvaluationFormData) {
         };
       
         batch.set(newEvalRef, docData);
-        console.log(`Evaluación para el profesor ${teacherId} preparada para el batch.`);
     });
 
     await batch.commit();
-    console.log("¡Batch de evaluaciones confirmado en Firestore con éxito!");
 
     revalidatePath("/dashboard");
     revalidatePath("/evaluation");
@@ -168,7 +159,6 @@ export async function submitEvaluation(data: EvaluationFormData) {
     };
 
   } catch (error) {
-    console.error("Error al confirmar el batch en Firestore:", error);
     return {
       success: false,
       message: "Ocurrió un error al guardar tu evaluación en la base de datos. Por favor, inténtalo de nuevo más tarde.",
@@ -217,7 +207,6 @@ export async function getEvaluations(): Promise<Evaluation[]> {
         return { 
             id: doc.id, 
             ...data,
-            // Convert Timestamp to ISO string
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString()
         } as Evaluation
     });
@@ -235,7 +224,6 @@ export async function getDashboardData() {
     return { evaluations, grades, teachers, students };
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
-    // Ensure we always return a valid object, even in case of an error.
     return { evaluations: [], grades: [], teachers: [], students: [] };
   }
 }
@@ -265,25 +253,20 @@ const studentUploadSchema = z.array(z.object({
 }));
 
 export async function uploadStudents(studentsData: unknown) {
-    console.log("Iniciando carga de estudiantes en el servidor...");
     const validatedFields = studentUploadSchema.safeParse(studentsData);
 
     if (!validatedFields.success) {
-        console.error("Error de validación de datos de estudiantes:", validatedFields.error.flatten());
         return { success: false, message: "El formato de los datos de los estudiantes no es válido. Revisa el archivo CSV." };
     }
 
     try {
-        console.log("Obteniendo grados desde Firestore...");
         const grades = await getGrades();
         const gradeMap = new Map(grades.map(g => [g.name, g.id]));
-        console.log("Mapa de grados creado:", gradeMap);
 
         const studentsCollectionRef = adminDb.collection("students");
         const existingStudentsSnapshot = await studentsCollectionRef.get();
         const existingCodes = new Set(existingStudentsSnapshot.docs.map(doc => doc.data().code));
         
-        console.log("Añadiendo nuevos estudiantes y omitiendo duplicados...");
         const addBatch = adminDb.batch();
         let studentCounter = 0;
         let skippedCounter = 0;
@@ -292,17 +275,16 @@ export async function uploadStudents(studentsData: unknown) {
         for (const student of validatedFields.data) {
             if(existingCodes.has(student.code)) {
                 duplicateCounter++;
-                continue; // Skip student if code already exists
+                continue; 
             }
 
             const gradeId = gradeMap.get(student.grade);
             if (!gradeId) {
                 skippedCounter++;
-                console.warn(`Grado no encontrado para '${student.grade}'. Saltando estudiante: ${student.name}`);
-                continue; // Skip student if grade doesn't exist
+                continue;
             }
             
-            const studentDocRef = studentsCollectionRef.doc(); // Firestore auto-generates ID
+            const studentDocRef = studentsCollectionRef.doc();
 
             const newStudent: Omit<Student, 'id'> = {
                 name: student.name,
@@ -314,7 +296,6 @@ export async function uploadStudents(studentsData: unknown) {
         }
 
         await addBatch.commit();
-        console.log(`${studentCounter} nuevos estudiantes añadidos.`);
         
         revalidatePath("/dashboard/configuration");
 
@@ -329,7 +310,6 @@ export async function uploadStudents(studentsData: unknown) {
         return { success: true, message };
 
     } catch (error) {
-        console.error("Error crítico al cargar estudiantes:", error);
         return { success: false, message: "Ocurrió un error en el servidor al procesar el archivo. Revisa los registros para más detalles." };
     }
 }
@@ -340,7 +320,6 @@ const addStudentSchema = z.object({
   gradeId: z.string().min(1, "Por favor, selecciona un grado."),
 });
 
-// Updated action to be compatible with useFormState
 export async function addStudent(prevState: any, formData: FormData) {
     const validatedFields = addStudentSchema.safeParse({
         name: formData.get("name"),
@@ -387,4 +366,3 @@ export async function addStudent(prevState: any, formData: FormData) {
         };
     }
 }
-    

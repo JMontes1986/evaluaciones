@@ -72,7 +72,7 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
             });
         }
     }
-  }, [state, toast]);
+  }, [state]);
 
   return (
     <Card className={cn(formIsDisabled && "bg-muted/50")}>
@@ -133,4 +133,3 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
     </Card>
   );
 }
-    
