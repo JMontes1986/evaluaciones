@@ -355,24 +355,33 @@ export async function addStudent(prevState: any, formData: FormData) {
         
         const existingStudentQuery = await studentsCollection.where("code", "==", code).limit(1).get();
         if (!existingStudentQuery.empty) {
-            return { success: false, message: `Ya existe un estudiante con el código ${code}.`, errors: prevState.errors };
+            return { 
+                success: false, 
+                message: `Ya existe un estudiante con el código ${code}.`,
+                errors: { code: ['Este código ya está en uso.'] }
+            };
         }
 
         const studentDocRef = studentsCollection.doc();
         const newStudent: Omit<Student, 'id'> = { name, code, gradeId };
         
         await studentDocRef.set(newStudent);
-        console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id}`);
         
         revalidatePath("/dashboard");
 
+        console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id} y nombre: ${name}`);
         return { success: true, message: `Estudiante ${name} añadido exitosamente.` , errors: {}};
 
     } catch (error) {
         console.error("Error al añadir estudiante:", error);
-        return { success: false, message: "Ocurrió un error en el servidor al añadir el estudiante.", errors: prevState.errors };
+        return { 
+            success: false, 
+            message: "Ocurrió un error en el servidor al añadir el estudiante.",
+            errors: {}
+        };
     }
 }
     
+
 
 

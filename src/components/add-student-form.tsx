@@ -22,9 +22,9 @@ const initialState = {
   message: '',
   success: false,
   errors: {
-    name: [] as string[],
-    code: [] as string[],
-    gradeId: [] as string[],
+    name: [] as string[] | undefined,
+    code: [] as string[] | undefined,
+    gradeId: [] as string[] | undefined,
   },
 };
 
@@ -49,7 +49,6 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
   const formIsDisabled = !grades || grades.length === 0;
 
   useEffect(() => {
-    // Only show toast if a message is present from the server action
     if (state && state.message) {
       if (state.success) {
         toast({
@@ -58,8 +57,10 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
           variant: "default",
           className: "bg-green-600 text-white border-green-700",
         });
-        // You might want to reset the form here. For actions, this can be tricky.
-        // A full page revalidation triggered by the action is usually the Next.js way.
+        // This is a way to reset the form after successful submission
+        // by clearing the state in the action.
+        const form = document.getElementById('add-student-form') as HTMLFormElement;
+        if (form) form.reset();
       } else {
         toast({
           title: "❌ Error",
@@ -83,7 +84,7 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        <form id="add-student-form" action={formAction} className="space-y-4">
           <fieldset disabled={formIsDisabled} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre Completo</Label>
@@ -130,5 +131,3 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
     </Card>
   );
 }
-
-
