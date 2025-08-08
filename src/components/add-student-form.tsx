@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useTransition } from 'react';
+import { useEffect } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -28,8 +29,28 @@ interface AddStudentFormProps {
   grades: Grade[];
 }
 
+const initialState = {
+  message: '',
+  success: false,
+  errors: {},
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <UserPlus className="mr-2 h-4 w-4" />
+      )}
+      {pending ? 'Añadiendo...' : 'Añadir Estudiante'}
+    </Button>
+  );
+}
+
 export function AddStudentForm({ grades }: AddStudentFormProps) {
-  const [isPending, startTransition] = useTransition();
+  const [state, formAction] = useFormState(addStudent, initialState);
   const { toast } = useToast();
   const formIsDisabled = !grades || grades.length === 0;
 
@@ -42,26 +63,27 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
     },
   });
 
-  const onSubmit = (data: AddStudentFormValues) => {
-    startTransition(async () => {
-      const result = await addStudent(data);
-      if (result.success) {
-        toast({
-          title: "✅ Estudiante Añadido",
-          description: `El estudiante ${data.name} ha sido añadido exitosamente.`,
-          variant: "default",
-          className: "bg-green-600 text-white border-green-700",
-        });
-        form.reset();
-      } else {
-        toast({
-          title: "❌ Error",
-          description: result.message || "Ocurrió un error al añadir el estudiante.",
-          variant: "destructive",
-        });
-      }
-    });
-  };
+  useEffect(() => {
+    if (state.success) {
+      toast({
+        title: "✅ Estudiante Añadido",
+        description: state.message,
+        variant: "default",
+        className: "bg-green-600 text-white border-green-700",
+      });
+      form.reset();
+      state.success = false; // Reset state to prevent re-firing
+      state.message = '';
+    } else if (state.message) {
+      toast({
+        title: "❌ Error",
+        description: state.message,
+        variant: "destructive",
+      });
+       state.message = ''; // Reset state to prevent re-firing
+    }
+  }, [state, toast, form]);
+
 
   return (
     <Card className={cn(formIsDisabled && "bg-muted/50")}>
@@ -76,8 +98,8 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <fieldset disabled={formIsDisabled || isPending} className="space-y-4">
+          <form action={formAction} className="space-y-4">
+            <fieldset disabled={formIsDisabled} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -129,17 +151,11 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
                 )}
               />
             </fieldset>
-            <Button type="submit" disabled={isPending || formIsDisabled} className='w-full'>
-              {isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <UserPlus className="mr-2 h-4 w-4" />
-              )}
-              {isPending ? 'Añadiendo...' : 'Añadir Estudiante'}
-            </Button>
+            <SubmitButton />
           </form>
         </Form>
       </CardContent>
     </Card>
   );
 }
+

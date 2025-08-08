@@ -332,11 +332,20 @@ const addStudentSchema = z.object({
   gradeId: z.string().min(1, "Por favor, selecciona un grado."),
 });
 
-export async function addStudent(data: z.infer<typeof addStudentSchema>) {
-    const validatedFields = addStudentSchema.safeParse(data);
+// Updated action to be compatible with useFormState
+export async function addStudent(prevState: any, formData: FormData) {
+    const validatedFields = addStudentSchema.safeParse({
+        name: formData.get("name"),
+        code: formData.get("code"),
+        gradeId: formData.get("gradeId"),
+    });
 
     if (!validatedFields.success) {
-        return { success: false, message: "Los datos proporcionados no son válidos." };
+        return {
+            success: false,
+            message: "Datos inválidos. Revisa los campos.",
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
     }
 
     const { name, code, gradeId } = validatedFields.data;
@@ -357,12 +366,11 @@ export async function addStudent(data: z.infer<typeof addStudentSchema>) {
         console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id}`);
         revalidatePath("/dashboard");
 
-        return { success: true, message: "Estudiante añadido exitosamente." };
+        return { success: true, message: `Estudiante ${name} añadido exitosamente.` };
 
     } catch (error) {
         console.error("Error al añadir estudiante:", error);
         return { success: false, message: "Ocurrió un error en el servidor al añadir el estudiante." };
     }
 }
-
     
