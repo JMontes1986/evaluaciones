@@ -12,8 +12,6 @@ import type { Evaluation, Teacher, Grade } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
 import { Skeleton } from "./ui/skeleton";
 import { getDashboardData } from "@/app/actions";
-import { StudentUpload } from "./student-upload";
-import { AddStudentForm } from "./add-student-form";
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
