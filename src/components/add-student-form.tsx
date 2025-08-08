@@ -1,8 +1,7 @@
 
 "use client";
 
-import { useEffect, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -18,59 +17,50 @@ interface AddStudentFormProps {
   grades: Grade[];
 }
 
-const initialState = {
-  message: '',
-  success: false,
-  errors: {
-    name: [] as string[] | undefined,
-    code: [] as string[] | undefined,
-    gradeId: [] as string[] | undefined,
-  },
-};
-
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : (
-        <UserPlus className="mr-2 h-4 w-4" />
-      )}
-      {pending ? 'Añadiendo...' : 'Añadir Estudiante'}
-    </Button>
-  );
+interface FormState {
+    success: boolean;
+    message: string;
+    errors?: {
+        name?: string[];
+        code?: string[];
+        gradeId?: string[];
+    };
 }
 
 export function AddStudentForm({ grades }: AddStudentFormProps) {
-  const [state, formAction] = useActionState(addStudent, initialState);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<FormState | undefined>();
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
   const formIsDisabled = !grades || grades.length === 0;
 
+  const handleSubmit = (formData: FormData) => {
+    setState(undefined); // Clear previous state
+    startTransition(async () => {
+      const result = await addStudent(formData);
+      setState(result);
+    });
+  };
+
   useEffect(() => {
-    if (state && state.message) {
-      if (state.success) {
-        toast({
-          title: "✅ Estudiante Añadido",
-          description: state.message,
-          variant: "default",
-          className: "bg-green-600 text-white border-green-700",
-        });
-        // This is a way to reset the form after successful submission
-        // by clearing the state in the action.
-        const form = document.getElementById('add-student-form') as HTMLFormElement;
-        if (form) form.reset();
-      } else {
-        toast({
-          title: "❌ Error",
-          description: state.message,
-          variant: "destructive",
-        });
-      }
+    if (state) {
+        if (state.success) {
+            toast({
+              title: "✅ Estudiante Añadido",
+              description: state.message,
+              variant: "default",
+              className: "bg-green-600 text-white border-green-700",
+            });
+            formRef.current?.reset(); // Reset form on success
+        } else if (state.message) {
+            toast({
+              title: "❌ Error",
+              description: state.message,
+              variant: "destructive",
+            });
+        }
     }
   }, [state, toast]);
-
 
   return (
     <Card className={cn(formIsDisabled && "bg-muted/50")}>
@@ -84,8 +74,8 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form id="add-student-form" action={formAction} className="space-y-4">
-          <fieldset disabled={formIsDisabled} className="space-y-4">
+        <form ref={formRef} action={handleSubmit} className="space-y-4">
+          <fieldset disabled={formIsDisabled || isPending} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre Completo</Label>
               <Input
@@ -125,11 +115,17 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
                  {state?.errors?.gradeId && <p className="text-sm font-medium text-destructive">{state.errors.gradeId[0]}</p>}
             </div>
           </fieldset>
-          <SubmitButton />
+           <Button type="submit" disabled={isPending || formIsDisabled} className="w-full">
+              {isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="mr-2 h-4 w-4" />
+              )}
+              {isPending ? 'Añadiendo...' : 'Añadir Estudiante'}
+            </Button>
         </form>
       </CardContent>
     </Card>
   );
 }
-
     

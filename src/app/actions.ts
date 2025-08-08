@@ -341,7 +341,7 @@ const addStudentSchema = z.object({
 });
 
 // Updated action to be compatible with useFormState
-export async function addStudent(prevState: any, formData: FormData) {
+export async function addStudent(formData: FormData) {
     const validatedFields = addStudentSchema.safeParse({
         name: formData.get("name"),
         code: formData.get("code"),
@@ -379,23 +379,14 @@ export async function addStudent(prevState: any, formData: FormData) {
         revalidatePath("/dashboard/configuration");
 
         console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id} y nombre: ${name}`);
-        return { success: true, message: `Estudiante ${name} añadido exitosamente.` , errors: {}};
+        return { success: true, message: `Estudiante ${name} añadido exitosamente.` };
 
     } catch (error) {
         console.error("Error al añadir estudiante:", error);
         return { 
             success: false, 
-            message: "Ocurrió un error en el servidor al añadir el estudiante.",
-            errors: {}
+            message: "Ocurrió un error en el servidor al añadir el estudiante."
         };
     }
 }
-    
-
-
-
-
-
-    
-
     
