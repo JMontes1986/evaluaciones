@@ -1,4 +1,3 @@
-
 "use server";
 
 import { z } from "zod";
@@ -197,7 +196,7 @@ export async function getTeachers(): Promise<Teacher[]> {
 
 export async function getStudents(): Promise<Student[]> {
   const studentsCollection = adminDb.collection("students");
-  const studentSnapshot = await studentCollection.get();
+  const studentSnapshot = await studentsCollection.get();
   return studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
 }
 
@@ -250,60 +249,78 @@ export async function getEvaluationsByStudent(studentId: string): Promise<Evalua
 }
 
 const studentUploadSchema = z.array(z.object({
-    name: z.string().min(1),
-    code: z.string().min(1),
-    gradeName: z.string().min(1),
+    name: z.string().min(1, "El nombre no puede estar vacío."),
+    code: z.string().min(1, "El código no puede estar vacío."),
+    grade: z.string().min(1, "El grado no puede estar vacío."),
 }));
 
 export async function uploadStudents(studentsData: unknown) {
+    console.log("Iniciando carga de estudiantes en el servidor...");
     const validatedFields = studentUploadSchema.safeParse(studentsData);
 
     if (!validatedFields.success) {
-        return { success: false, message: "El formato de los datos de los estudiantes no es válido." };
+        console.error("Error de validación de datos de estudiantes:", validatedFields.error.flatten());
+        return { success: false, message: "El formato de los datos de los estudiantes no es válido. Revisa el archivo CSV." };
     }
 
     try {
+        console.log("Obteniendo grados desde Firestore...");
         const grades = await getGrades();
         const gradeMap = new Map(grades.map(g => [g.name, g.id]));
+        console.log("Mapa de grados creado:", gradeMap);
 
         const studentsCollectionRef = adminDb.collection("students");
 
-        // 1. Delete all existing students
+        console.log("Borrando todos los estudiantes existentes...");
         const existingStudentsSnapshot = await studentsCollectionRef.get();
         if (!existingStudentsSnapshot.empty) {
             const deleteBatch = adminDb.batch();
             existingStudentsSnapshot.docs.forEach(doc => deleteBatch.delete(doc.ref));
             await deleteBatch.commit();
+            console.log(`${existingStudentsSnapshot.size} estudiantes existentes eliminados.`);
+        } else {
+            console.log("No se encontraron estudiantes existentes para eliminar.");
         }
-
-        // 2. Add new students
+        
+        console.log("Añadiendo nuevos estudiantes...");
         const addBatch = adminDb.batch();
         let studentCounter = 0;
+        let skippedCounter = 0;
+        
         for (const student of validatedFields.data) {
-            const gradeId = gradeMap.get(student.gradeName);
+            const gradeId = gradeMap.get(student.grade);
             if (!gradeId) {
-                console.warn(`Grado no encontrado para '${student.gradeName}'. Saltando estudiante: ${student.name}`);
-                continue;
+                skippedCounter++;
+                console.warn(`Grado no encontrado para '${student.grade}'. Saltando estudiante: ${student.name}`);
+                continue; // Skip student if grade doesn't exist
             }
-            const studentId = `s${++studentCounter}`;
+            
+            const studentId = `s${Date.now()}${studentCounter}`; // More unique ID
             const studentDocRef = studentsCollectionRef.doc(studentId);
-            const newStudent: Student = {
-                id: studentId,
+
+            const newStudent: Omit<Student, 'id'> = {
                 name: student.name,
                 code: student.code,
                 gradeId: gradeId,
             };
             addBatch.set(studentDocRef, newStudent);
+            studentCounter++;
         }
 
         await addBatch.commit();
+        console.log(`${studentCounter} nuevos estudiantes añadidos.`);
         
         revalidatePath("/dashboard");
 
-        return { success: true, message: `${studentCounter} estudiantes cargados exitosamente.` };
+        let message = `${studentCounter} estudiantes cargados exitosamente.`;
+        if (skippedCounter > 0) {
+            message += ` ${skippedCounter} estudiantes fueron omitidos debido a que su grado no fue encontrado.`;
+        }
+
+        return { success: true, message };
 
     } catch (error) {
-        console.error("Error al cargar estudiantes:", error);
-        return { success: false, message: "Ocurrió un error en el servidor al cargar los estudiantes." };
+        console.error("Error crítico al cargar estudiantes:", error);
+        return { success: false, message: "Ocurrió un error en el servidor al procesar el archivo. Revisa los registros para más detalles." };
     }
 }

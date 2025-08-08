@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -106,7 +105,7 @@ export function DashboardClient() {
         average: getAverageScore(gradeEvals).toFixed(2),
         evaluations: gradeEvals.length
       }
-    }).filter(Boolean) as { name: string; average: string; evaluations: number }[]);
+    }).filter(Boolean) as { name: string; average: string; evaluations: number }[];
   }, [filteredData, grades]);
   
   const questionAverages = useMemo(() => {
@@ -216,7 +215,7 @@ export function DashboardClient() {
         </CardContent>
       </Card>
 
-      <StudentUpload grades={grades} />
+      <StudentUpload />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
