@@ -251,7 +251,61 @@ export async function getEvaluationsByStudent(studentId: string): Promise<Evalua
     return evaluationList;
 }
 
+const studentUploadSchema = z.array(z.object({
+    name: z.string().min(1),
+    code: z.string().min(1),
+    gradeName: z.string().min(1),
+}));
 
+export async function uploadStudents(studentsData: unknown) {
+    const validatedFields = studentUploadSchema.safeParse(studentsData);
 
+    if (!validatedFields.success) {
+        return { success: false, message: "El formato de los datos de los estudiantes no es válido." };
+    }
 
-    
+    try {
+        const grades = await getGrades();
+        const gradeMap = new Map(grades.map(g => [g.name, g.id]));
+
+        const studentsCollectionRef = adminDb.collection("students");
+
+        // 1. Delete all existing students
+        const existingStudentsSnapshot = await studentsCollectionRef.get();
+        if (!existingStudentsSnapshot.empty) {
+            const deleteBatch = adminDb.batch();
+            existingStudentsSnapshot.docs.forEach(doc => deleteBatch.delete(doc.ref));
+            await deleteBatch.commit();
+        }
+
+        // 2. Add new students
+        const addBatch = adminDb.batch();
+        let studentCounter = 0;
+        for (const student of validatedFields.data) {
+            const gradeId = gradeMap.get(student.gradeName);
+            if (!gradeId) {
+                console.warn(`Grado no encontrado para '${student.gradeName}'. Saltando estudiante: ${student.name}`);
+                continue;
+            }
+            const studentId = `s${++studentCounter}`;
+            const studentDocRef = studentsCollectionRef.doc(studentId);
+            const newStudent: Student = {
+                id: studentId,
+                name: student.name,
+                code: student.code,
+                gradeId: gradeId,
+            };
+            addBatch.set(studentDocRef, newStudent);
+        }
+
+        await addBatch.commit();
+        
+        revalidatePath("/dashboard");
+
+        return { success: true, message: `${studentCounter} estudiantes cargados exitosamente.` };
+
+    } catch (error) {
+        console.error("Error al cargar estudiantes:", error);
+        return { success: false, message: "Ocurrió un error en el servidor al cargar los estudiantes." };
+    }
+}

@@ -12,6 +12,7 @@ import type { Evaluation, Teacher, Grade } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
 import { Skeleton } from "./ui/skeleton";
 import { getDashboardData } from "@/app/actions";
+import { StudentUpload } from "./student-upload";
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -214,6 +215,8 @@ export function DashboardClient() {
           </Select>
         </CardContent>
       </Card>
+
+      <StudentUpload grades={grades} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
