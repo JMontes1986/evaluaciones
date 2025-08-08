@@ -364,5 +364,3 @@ export async function addStudent(data: z.infer<typeof addStudentSchema>) {
         return { success: false, message: "Ocurrió un error en el servidor al añadir el estudiante." };
     }
 }
-
-    
