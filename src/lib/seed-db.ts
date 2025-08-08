@@ -20,7 +20,35 @@ const initialTeachers: Omit<Teacher, "id">[] = [
 ];
 
 const initialStudents: Omit<Student, "id">[] = [
-    { name: "ALZATE CLAVIJO JUAN ALEJANDRO", code: "5566", gradeId: "g1" }
+    { name: "ARCILA DÍAZ SAMANTHA", code: "5540", gradeId: "g1" },
+    { name: "ARÍAS GONZÁLEZ DAMIAN", code: "5741", gradeId: "g1" },
+    { name: "BOTERO GIRALDO SANTIAGO", code: "5593", gradeId: "g1" },
+    { name: "CALLE DÁVILA ANTONIO", code: "5502", gradeId: "g1" },
+    { name: "CASAS GARCIA EMMANUEL", code: "5619", gradeId: "g1" },
+    { name: "CASTRILLÓN OROZCO MARÍA PAZ", code: "5539", gradeId: "g1" },
+    { name: "DUQUE VALENCIA SAMANTHA", code: "5519", gradeId: "g1" },
+    { name: "FERNANDEZ RAMIREZ JUAN ANDRES", code: "5615", gradeId: "g1" },
+    { name: "FRANCO MORENO JOAQUÍN", code: "5686", gradeId: "g1" },
+    { name: "GALLEGO GARCIA GABRIELA", code: "5627", gradeId: "g1" },
+    { name: "GARCÍA LEÓN KATHERINE", code: "5493", gradeId: "g1" },
+    { name: "HOYOS MISAS LUCIA", code: "5491", gradeId: "g1" },
+    { name: "ISAZA LONDOÑO ANTONIA", code: "5504", gradeId: "g1" },
+    { name: "LÓPEZ CASTAÑO TOMÁS", code: "5526", gradeId: "g1" },
+    { name: "MARTÍNEZ ALVAREZ VICTORIA", code: "5651", gradeId: "g1" },
+    { name: "MUNEVAR GRANADOS VALERI LUCIANA", code: "5543", gradeId: "g1" },
+    { name: "NARANJO LÓPEZ LUCIANA", code: "5562", gradeId: "g1" },
+    { name: "OSORIO LOPERA ANTONIA", code: "5628", gradeId: "g1" },
+    { name: "OSPINA ECHEVERRY EMILIANO", code: "5608", gradeId: "g1" },
+    { name: "PATIÑO HIGUITA ISABELLA", code: "5705", gradeId: "g1" },
+    { name: "PAVA GONZÁLEZ JUAN JOSÉ", code: "5671", gradeId: "g1" },
+    { name: "RESTREPO LONDOÑO MARTÍN", code: "5735", gradeId: "g1" },
+    { name: "RUANO MUÑOZ JOSÉ FERNANDO", code: "5658", gradeId: "g1" },
+    { name: "SALAZAR CASTAÑEDA MATÍAS", code: "5503", gradeId: "g1" },
+    { name: "SALAZAR QUINTERO SAMUEL", code: "5604", gradeId: "g1" },
+    { name: "SANCHEZ ARBOLEDA ANTONIA", code: "5606", gradeId: "g1" },
+    { name: "SERNA TRUJILLO FEDERICO", code: "5514", gradeId: "g1" },
+    { name: "TRUJILLO AGUIRRE MARTIN", code: "5623", gradeId: "g1" },
+    { name: "URUEÑA CRUZ DANNA ISABELLA", code: "5563", gradeId: "g1" }
 ];
 
 
