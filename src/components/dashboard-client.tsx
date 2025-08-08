@@ -8,15 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Download, BarChart3, Users, Star, GraduationCap } from "lucide-react";
-import type { Evaluation, Teacher, Grade } from "@/lib/types";
+import type { Evaluation, Teacher, Grade, Student } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
 import { Skeleton } from "./ui/skeleton";
 import { getDashboardData } from "@/app/actions";
+import { AddStudentForm } from "./add-student-form";
+import { StudentUpload } from "./student-upload";
+
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredData, setFilteredData] = useState<Evaluation[]>([]);
   const [selectedGrade, setSelectedGrade] = useState("all");
@@ -28,16 +32,18 @@ export function DashboardClient() {
       try {
         const data = await getDashboardData();
         if (data) {
-          const { evaluations: evals, grades: gradesData, teachers: teachersData } = data;
+          const { evaluations: evals, grades: gradesData, teachers: teachersData, students: studentsData } = data;
           setEvaluations(evals || []);
           setFilteredData(evals || []);
           setGrades(gradesData || []);
           setTeachers(teachersData || []);
+          setStudents(studentsData || []);
         } else {
             setEvaluations([]);
             setFilteredData([]);
             setGrades([]);
             setTeachers([]);
+            setStudents([]);
         }
 
       } catch (error) {
@@ -46,6 +52,7 @@ export function DashboardClient() {
         setFilteredData([]);
         setGrades([]);
         setTeachers([]);
+        setStudents([]);
       } finally {
         setLoading(false);
       }
@@ -180,7 +187,6 @@ export function DashboardClient() {
     );
   }
   
-
   return (
     <div className="space-y-6">
       <Card>
@@ -343,6 +349,25 @@ export function DashboardClient() {
           </Card>
         </TabsContent>
       </Tabs>
+
+        {loading || (grades && grades.length > 0) ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                <AddStudentForm grades={grades} />
+                <StudentUpload />
+            </div>
+        ) : (
+            <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle>Gestión de Estudiantes no Disponible</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">
+                        No se pudieron cargar los datos necesarios para la gestión de estudiantes. 
+                        Por favor, comprueba tu conexión o recarga la página. Si el problema persiste, contacta con el administrador.
+                    </p>
+                </CardContent>
+            </Card>
+        )}
     </div>
   );
 }

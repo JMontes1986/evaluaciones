@@ -4,14 +4,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { LogOut, LayoutDashboard } from "lucide-react";
 import { logout } from "@/app/actions";
-import { cn } from "@/lib/utils";
-
-const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/configuration", label: "Configuración", icon: Settings },
-];
 
 export default function DashboardLayout({
   children,
@@ -28,17 +22,15 @@ export default function DashboardLayout({
             <h1 className="text-xl font-bold font-headline">Admin</h1>
         </div>
         <nav className="flex flex-col gap-2 flex-1">
-            {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                    <Button 
-                        variant={pathname === item.href ? "secondary" : "ghost"} 
-                        className="w-full justify-start gap-2"
-                    >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                    </Button>
-                </Link>
-            ))}
+            <Link href="/dashboard">
+                <Button 
+                    variant={pathname === "/dashboard" ? "secondary" : "ghost"} 
+                    className="w-full justify-start gap-2"
+                >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                </Button>
+            </Link>
         </nav>
         <form action={logout} className="mt-auto">
             <Button variant="outline" type="submit" className="w-full justify-start gap-2">
