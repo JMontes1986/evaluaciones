@@ -3,9 +3,6 @@
 
 import { useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -17,14 +14,6 @@ import type { Grade } from '@/lib/types';
 import { UserPlus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const addStudentSchema = z.object({
-  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  code: z.string().min(1, "El código es requerido."),
-  gradeId: z.string().min(1, "Por favor, selecciona un grado."),
-});
-
-type AddStudentFormValues = z.infer<typeof addStudentSchema>;
-
 interface AddStudentFormProps {
   grades: Grade[];
 }
@@ -32,8 +21,13 @@ interface AddStudentFormProps {
 const initialState = {
   message: '',
   success: false,
-  errors: {},
+  errors: {
+    name: [],
+    code: [],
+    gradeId: [],
+  },
 };
+
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -54,41 +48,27 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
   const { toast } = useToast();
   const formIsDisabled = !grades || grades.length === 0;
 
-  const form = useForm<AddStudentFormValues>({
-    resolver: zodResolver(addStudentSchema),
-    defaultValues: {
-      name: '',
-      code: '',
-      gradeId: '',
-    },
-    // Pass server-side errors to the form
-    errors: state?.errors ? (state.errors as any) : {},
-  });
-
-
   useEffect(() => {
-    if (state.success) {
-      toast({
-        title: "✅ Estudiante Añadido",
-        description: state.message,
-        variant: "default",
-        className: "bg-green-600 text-white border-green-700",
-      });
-      form.reset();
-      // Since we can't directly mutate state, these might not be necessary if state is reset elsewhere
-      // Or we can trigger a re-render or state reset mechanism if needed
-      state.success = false; 
-      state.message = '';
-    } else if (state.message && !state.success) {
-      toast({
-        title: "❌ Error",
-        description: state.message,
-        variant: "destructive",
-      });
-       // Reset message to prevent re-firing on subsequent re-renders without a new action
-       state.message = '';
+    // Only show toast if a message is present from the server action
+    if (state && state.message) {
+      if (state.success) {
+        toast({
+          title: "✅ Estudiante Añadido",
+          description: state.message,
+          variant: "default",
+          className: "bg-green-600 text-white border-green-700",
+        });
+        // Resetting form would require a ref, but letting the action clear it is better.
+        // Or just let the user see the success and continue.
+      } else {
+        toast({
+          title: "❌ Error",
+          description: state.message,
+          variant: "destructive",
+        });
+      }
     }
-  }, [state, toast, form]);
+  }, [state, toast]);
 
 
   return (
@@ -103,9 +83,8 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* The form now directly uses the formAction from useActionState */}
         <form action={formAction} className="space-y-4">
-          <fieldset disabled={formIsDisabled || form.formState.isSubmitting} className="space-y-4">
+          <fieldset disabled={formIsDisabled} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre Completo</Label>
               <Input
