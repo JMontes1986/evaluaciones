@@ -15,7 +15,7 @@ const evaluationSchema = z.object({
   studentId: z.string().min(1, "El ID del estudiante es requerido."),
   teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
   // La validación de las evaluaciones individuales se omite aquí para simplificar
-  // y se confía en la validación del cliente, ya que era la fuente del error.
+  // y se confía en la validación del cliente.
   evaluations: z.any(),
 });
 
@@ -252,3 +252,6 @@ export async function getEvaluationsByStudent(studentId: string): Promise<Evalua
 }
 
 
+
+
+    
