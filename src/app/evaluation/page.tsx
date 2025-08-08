@@ -53,7 +53,7 @@ export default async function EvaluationPage() {
           {student ? (
             <EvaluationForm 
               student={student} 
-              availableTeachers={availableTeachers}
+              initialAvailableTeachers={availableTeachers}
               allTeachers={allTeachers}
               studentGradeName={studentGradeName}
               evaluationQuestions={evaluationQuestions}
@@ -66,5 +66,7 @@ export default async function EvaluationPage() {
     </div>
   );
 }
+
+    
 
     

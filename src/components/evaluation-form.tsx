@@ -27,16 +27,17 @@ const ratingOptions = [
 
 interface EvaluationFormProps {
   student: Student;
-  availableTeachers: Teacher[];
+  initialAvailableTeachers: Teacher[];
   allTeachers: Teacher[];
   studentGradeName?: string;
   evaluationQuestions: {id: string, text: string}[];
 }
 
-export function EvaluationForm({ student, availableTeachers, allTeachers, studentGradeName, evaluationQuestions }: EvaluationFormProps) {
+export function EvaluationForm({ student, initialAvailableTeachers, allTeachers, studentGradeName, evaluationQuestions }: EvaluationFormProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [activeAccordion, setActiveAccordion] = useState<string>("");
+  const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>(initialAvailableTeachers);
   
   const evaluationSchema = useMemo(() => z.object({
     teacherIds: z.array(z.string()).min(1, "Por favor, selecciona al menos un profesor para evaluar."),
@@ -89,11 +90,24 @@ export function EvaluationForm({ student, availableTeachers, allTeachers, studen
       if (result.success) {
         toast({
           title: "✅ ¡Evaluación Enviada!",
-          description: "¡Gracias por tus comentarios! Tu opinión nos ayuda a mejorar.",
+          description: "¡Gracias por tus comentarios! Puedes seguir evaluando a otros profesores.",
           variant: "default",
           className: "bg-green-600 text-white border-green-700",
         });
-        window.location.reload(); 
+
+        // Update the list of available teachers on the client
+        const evaluatedTeacherIds = data.teacherIds;
+        setAvailableTeachers(currentTeachers => 
+          currentTeachers.filter(t => !evaluatedTeacherIds.includes(t.id))
+        );
+
+        // Reset the form to its default state
+        form.reset({
+          teacherIds: [],
+          evaluations: {},
+        });
+        setActiveAccordion("");
+        
       } else {
         toast({
           title: "❌ ¡Error!",
@@ -290,3 +304,5 @@ export function EvaluationForm({ student, availableTeachers, allTeachers, studen
     </Form>
   );
 }
+
+    
