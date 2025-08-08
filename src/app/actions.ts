@@ -325,4 +325,42 @@ export async function uploadStudents(studentsData: unknown) {
     }
 }
 
-    
+const addStudentSchema = z.object({
+  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
+  code: z.string().min(1, "El código es requerido."),
+  gradeId: z.string().min(1, "Por favor, selecciona un grado."),
+});
+
+export async function addStudent(data: z.infer<typeof addStudentSchema>) {
+    const validatedFields = addStudentSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+        return { success: false, message: "Los datos proporcionados no son válidos." };
+    }
+
+    const { name, code, gradeId } = validatedFields.data;
+
+    try {
+        const studentsCollection = adminDb.collection("students");
+        
+        // Verificar si ya existe un estudiante con el mismo código
+        const existingStudentQuery = await studentsCollection.where("code", "==", code).limit(1).get();
+        if (!existingStudentQuery.empty) {
+            return { success: false, message: `Ya existe un estudiante con el código ${code}.` };
+        }
+
+        const studentDocRef = studentsCollection.doc();
+        const newStudent: Omit<Student, 'id'> = { name, code, gradeId };
+        
+        await studentDocRef.set(newStudent);
+
+        console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id}`);
+        revalidatePath("/dashboard");
+
+        return { success: true, message: "Estudiante añadido exitosamente." };
+
+    } catch (error) {
+        console.error("Error al añadir estudiante:", error);
+        return { success: false, message: "Ocurrió un error en el servidor al añadir el estudiante." };
+    }
+}

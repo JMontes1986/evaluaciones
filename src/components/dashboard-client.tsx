@@ -13,6 +13,7 @@ import { evaluationQuestions } from "@/lib/types";
 import { Skeleton } from "./ui/skeleton";
 import { getDashboardData } from "@/app/actions";
 import { StudentUpload } from "./student-upload";
+import { AddStudentForm } from "./add-student-form";
 
 export function DashboardClient() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -93,7 +94,7 @@ export function DashboardClient() {
         average: getAverageScore(teacherEvals).toFixed(2),
         evaluations: teacherEvals.length
       }
-    }).filter(Boolean) as { name: string; average: string; evaluations: number }[];
+    }).filter(Boolean) as { name: string; average: string; evaluations: number }[]
     return teacherData.sort((a,b) => Number(b.average) - Number(a.average));
   }, [filteredData, teachers]);
 
@@ -106,7 +107,7 @@ export function DashboardClient() {
         average: getAverageScore(gradeEvals).toFixed(2),
         evaluations: gradeEvals.length
       };
-    }).filter(Boolean) as { name: string; average: string; evaluations: number }[]);
+    }).filter(Boolean)) as { name: string; average: string; evaluations: number }[]
   }, [filteredData, grades]);
   
   const questionAverages = useMemo(() => {
@@ -115,7 +116,7 @@ export function DashboardClient() {
       if (scores.length === 0) return null;
       const average = scores.reduce((a, b) => a + b, 0) / scores.length;
       return { name: q.text.substring(0, 25) + "...", average: average.toFixed(2) };
-    }).filter(Boolean) as { name: string; average: string }[]);
+    }).filter(Boolean)) as { name: string; average: string }[]
   }, [filteredData]);
 
 
@@ -215,8 +216,11 @@ export function DashboardClient() {
           </Select>
         </CardContent>
       </Card>
-
-      <StudentUpload />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AddStudentForm grades={grades} />
+        <StudentUpload />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
