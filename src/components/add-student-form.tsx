@@ -77,7 +77,7 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <fieldset disabled={formIsDisabled} className="space-y-4">
+            <fieldset disabled={formIsDisabled || isPending} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -110,7 +110,7 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Grado</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un grado" />
