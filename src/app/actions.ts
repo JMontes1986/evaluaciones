@@ -45,7 +45,7 @@ export async function login(prevState: any, formData: FormData) {
   // WARNING: Hardcoded credentials. In a real-world scenario, use a secure authentication provider.
   if (username === "administrador" && password === "G3m3ll1.2024*") {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    await cookies().set("session", "admin_logged_in", { expires, httpOnly: true });
+    cookies().set("session", "admin_logged_in", { expires, httpOnly: true });
     return redirect("/dashboard");
   } else {
     return {
@@ -79,7 +79,7 @@ export async function studentLogin(prevState: any, formData: FormData) {
     const studentData = studentSnapshot.docs[0].data() as Student;
     const studentId = studentSnapshot.docs[0].id;
     const expires = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
-    await cookies().set("student_session", JSON.stringify({...studentData, id: studentId}), { expires, httpOnly: true });
+    cookies().set("student_session", JSON.stringify({...studentData, id: studentId}), { expires, httpOnly: true });
     
     revalidatePath("/evaluation");
     redirect("/evaluation");
@@ -87,12 +87,12 @@ export async function studentLogin(prevState: any, formData: FormData) {
 
 
 export async function logout() {
-  await cookies().set("session", "", { expires: new Date(0) });
+  cookies().set("session", "", { expires: new Date(0) });
   redirect("/login");
 }
 
 export async function studentLogout() {
-  await cookies().set("student_session", "", { expires: new Date(0) });
+  cookies().set("student_session", "", { expires: new Date(0) });
   revalidatePath("/evaluation");
   redirect("/evaluation");
 }
@@ -365,3 +365,5 @@ export async function addStudent(data: z.infer<typeof addStudentSchema>) {
         return { success: false, message: "Ocurrió un error en el servidor al añadir el estudiante." };
     }
 }
+
+    
