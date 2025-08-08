@@ -24,11 +24,11 @@ export default function DashboardLayout({
         <nav className="flex flex-col gap-2 flex-1">
             <Link href="/dashboard">
                 <Button 
-                    variant={pathname === "/dashboard" ? "secondary" : "ghost"} 
+                    variant={pathname.startsWith("/dashboard") ? "secondary" : "ghost"} 
                     className="w-full justify-start gap-2"
                 >
                     <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
+                    Resultados
                 </Button>
             </Link>
         </nav>
