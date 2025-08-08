@@ -15,10 +15,10 @@ const initialGrades: Omit<Grade, "id">[] = [
 ];
 
 const initialTeachers: Omit<Teacher, "id">[] = [
-  { name: "Natalia Valencia Benítez", subject: "Ciencias Naturales", grades: ["g1"] },
+  { name: "Natalia Valencia Benítez", subject: "Ciencias Naturales", grades: ["3°"] },
 ];
 
-const initialStudents: Omit<Student, "id"|'gradeId'> & {gradeName: string}[] = [
+const initialStudents: Omit<Student, 'id'|'gradeId'> & {gradeName: string}[] = [
     { name: "ARCILA DÍAZ SAMANTHA", code: "5540", gradeName: "3°" },
     { name: "ARÍAS GONZÁLEZ DAMIAN", code: "5741", gradeName: "3°" },
     { name: "BOTERO GIRALDO SANTIAGO", code: "5593", gradeName: "3°" },
@@ -54,68 +54,81 @@ const initialStudents: Omit<Student, "id"|'gradeId'> & {gradeName: string}[] = [
 async function seedDatabase() {
   console.log("🌱 Empezando a poblar la base de datos...");
   let exitCode = 0;
-  const db = adminDb; // Alias para compatibilidad
+  const db = adminDb; 
 
   try {
     // ---- Poblar Grados ----
-    const gradesCollection = db.collection("grades");
-    const gradesBatch = db.batch();
-    console.log("🗑️ Borrando grados existentes...");
-    const existingGrades = await gradesCollection.get();
-    existingGrades.docs.forEach(doc => gradesBatch.delete(doc.ref));
-    await gradesBatch.commit();
-    
-    const newGradesBatch = db.batch();
-    const gradeIdMap = new Map<string, string>();
     console.log("📚 Añadiendo grados...");
-    initialGrades.forEach((grade) => {
-      const docRef = gradesCollection.doc(); // Firestore auto-generates ID
-      newGradesBatch.set(docRef, grade);
-      gradeIdMap.set(grade.name, docRef.id);
-    });
-    await newGradesBatch.commit();
-    console.log("✅ Grados añadidos con éxito.");
+    const gradesCollection = db.collection("grades");
+    // Primero, obtener todos los grados existentes para no duplicar por nombre
+    const existingGradesSnapshot = await gradesCollection.get();
+    const existingGradesMap = new Map(existingGradesSnapshot.docs.map(doc => [doc.data().name, doc.id]));
+
+    const gradeIdMap = new Map<string, string>(existingGradesMap);
+
+    const gradesBatch = db.batch();
+    for (const grade of initialGrades) {
+        if (!existingGradesMap.has(grade.name)) {
+            const docRef = gradesCollection.doc();
+            gradesBatch.set(docRef, grade);
+            gradeIdMap.set(grade.name, docRef.id);
+            console.log(` -> Grado a añadir: ${grade.name}`);
+        } else {
+            console.log(` -> Grado ya existe: ${grade.name}`);
+        }
+    }
+    await gradesBatch.commit();
+    console.log("✅ Grados procesados con éxito.");
 
     // ---- Poblar Profesores ----
+     console.log("👩‍🏫 Añadiendo profesores...");
     const teachersCollection = db.collection("teachers");
+    const existingTeachersSnapshot = await teachersCollection.get();
+    const existingTeachersSet = new Set(existingTeachersSnapshot.docs.map(doc => doc.data().name));
+    
     const teachersBatch = db.batch();
-    console.log("🗑️ Borrando profesores existentes...");
-    const existingTeachers = await teachersCollection.get();
-    existingTeachers.docs.forEach(doc => teachersBatch.delete(doc.ref));
+    for (const teacher of initialTeachers) {
+        if(!existingTeachersSet.has(teacher.name)) {
+            const docRef = teachersCollection.doc();
+            const gradeIds = teacher.grades.map(gradeName => gradeIdMap.get(gradeName)).filter(Boolean) as string[];
+            if(gradeIds.length > 0) {
+                teachersBatch.set(docRef, { ...teacher, grades: gradeIds });
+                console.log(` -> Profesor a añadir: ${teacher.name}`);
+            } else {
+                 console.warn(` -> Saltando profesor '${teacher.name}' porque su grado no fue encontrado.`);
+            }
+        } else {
+            console.log(` -> Profesor ya existe: ${teacher.name}`);
+        }
+    }
     await teachersBatch.commit();
-
-    const newTeachersBatch = db.batch();
-    console.log("👩‍🏫 Añadiendo profesores...");
-    initialTeachers.forEach((teacher) => {
-      const docRef = teachersCollection.doc();
-      const gradeIds = teacher.grades.map(gradeName => gradeIdMap.get(gradeName)).filter(Boolean) as string[];
-      newTeachersBatch.set(docRef, { ...teacher, grades: gradeIds });
-    });
-    await newTeachersBatch.commit();
-    console.log("✅ Profesores añadidos con éxito.");
+    console.log("✅ Profesores procesados con éxito.");
 
     // ---- Poblar Estudiantes ----
-    const studentsCollection = db.collection("students");
-    const studentsBatch = db.batch();
-    console.log("🗑️ Borrando estudiantes existentes...");
-    const existingStudents = await studentsCollection.get();
-    existingStudents.docs.forEach(doc => studentsBatch.delete(doc.ref));
-    await studentsBatch.commit();
-
-    const newStudentsBatch = db.batch();
     console.log("👨‍🎓 Añadiendo estudiantes...");
-    initialStudents.forEach((student) => {
-        const gradeId = gradeIdMap.get(student.gradeName);
-        if (gradeId) {
-            const docRef = studentsCollection.doc();
-            const { gradeName, ...studentData } = student;
-            newStudentsBatch.set(docRef, { ...studentData, gradeId });
+    const studentsCollection = db.collection("students");
+    const existingStudentsSnapshot = await studentsCollection.get();
+    const existingCodesSet = new Set(existingStudentsSnapshot.docs.map(doc => doc.data().code));
+    
+    const studentsBatch = db.batch();
+    for (const student of initialStudents) {
+        if (!existingCodesSet.has(student.code)) {
+            const gradeId = gradeIdMap.get(student.gradeName);
+            if (gradeId) {
+                const docRef = studentsCollection.doc();
+                const { gradeName, ...studentData } = student;
+                studentsBatch.set(docRef, { ...studentData, gradeId });
+                console.log(` -> Estudiante a añadir: ${student.name}`);
+            } else {
+                console.warn(` -> Saltando estudiante '${student.name}' porque su grado '${student.gradeName}' no fue encontrado.`);
+            }
         } else {
-            console.warn(`Grado no encontrado para '${student.gradeName}'. Saltando estudiante: ${student.name}`);
+             console.log(` -> Estudiante con código ${student.code} ya existe: ${student.name}`);
         }
-    });
-    await newStudentsBatch.commit();
-    console.log("✅ Estudiantes añadidos con éxito.");
+    }
+    await studentsBatch.commit();
+    console.log("✅ Estudiantes procesados con éxito.");
+
 
     console.log("✨ ¡Base de datos poblada exitosamente!");
 
@@ -123,6 +136,7 @@ async function seedDatabase() {
     console.error("❌ Error poblando la base de datos:", error);
     exitCode = 1;
   } finally {
+    // Forzar la salida del proceso para asegurar que el script termine.
     process.exit(exitCode);
   }
 }
