@@ -217,13 +217,10 @@ export function DashboardClient() {
         </CardContent>
       </Card>
       
-      {grades.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <AddStudentForm grades={grades} />
-            <StudentUpload />
-          </div>
-      )}
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AddStudentForm grades={grades} />
+        <StudentUpload />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -356,3 +353,5 @@ export function DashboardClient() {
     </div>
   );
 }
+
+    

@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addStudent } from '@/app/actions';
 import type { Grade } from '@/lib/types';
 import { UserPlus, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const addStudentSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
@@ -30,6 +31,7 @@ interface AddStudentFormProps {
 export function AddStudentForm({ grades }: AddStudentFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const formIsDisabled = !grades || grades.length === 0;
 
   const form = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentSchema),
@@ -62,67 +64,72 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
   };
 
   return (
-    <Card>
+    <Card className={cn(formIsDisabled && "bg-muted/50")}>
       <CardHeader>
         <CardTitle>Añadir Estudiante Manualmente</CardTitle>
         <CardDescription>
-          Completa el formulario para añadir un nuevo estudiante al sistema.
+          {formIsDisabled 
+            ? "La carga de grados falló. No se pueden añadir estudiantes en este momento."
+            : "Completa el formulario para añadir un nuevo estudiante al sistema."
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre Completo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ej: Juan Pérez" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Código del Estudiante</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ej: 1234" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="gradeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Grado</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <fieldset disabled={formIsDisabled} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre Completo</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un grado" />
-                      </SelectTrigger>
+                      <Input placeholder="Ej: Juan Pérez" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      {grades.map((grade) => (
-                        <SelectItem key={grade.id} value={grade.id}>
-                          {grade.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isPending} className='w-full'>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código del Estudiante</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: 1234" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="gradeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grado</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un grado" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {grades.map((grade) => (
+                          <SelectItem key={grade.id} value={grade.id}>
+                            {grade.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </fieldset>
+            <Button type="submit" disabled={isPending || formIsDisabled} className='w-full'>
               {isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -136,3 +143,5 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
     </Card>
   );
 }
+
+    
