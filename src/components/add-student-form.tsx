@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -50,7 +50,7 @@ function SubmitButton() {
 }
 
 export function AddStudentForm({ grades }: AddStudentFormProps) {
-  const [state, formAction] = useFormState(addStudent, initialState);
+  const [state, formAction] = useActionState(addStudent, initialState);
   const { toast } = useToast();
   const formIsDisabled = !grades || grades.length === 0;
 
@@ -61,7 +61,10 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
       code: '',
       gradeId: '',
     },
+    // Pass server-side errors to the form
+    errors: state?.errors ? (state.errors as any) : {},
   });
+
 
   useEffect(() => {
     if (state.success) {
@@ -72,15 +75,18 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
         className: "bg-green-600 text-white border-green-700",
       });
       form.reset();
-      state.success = false; // Reset state to prevent re-firing
+      // Since we can't directly mutate state, these might not be necessary if state is reset elsewhere
+      // Or we can trigger a re-render or state reset mechanism if needed
+      state.success = false; 
       state.message = '';
-    } else if (state.message) {
+    } else if (state.message && !state.success) {
       toast({
         title: "❌ Error",
         description: state.message,
         variant: "destructive",
       });
-       state.message = ''; // Reset state to prevent re-firing
+       // Reset message to prevent re-firing on subsequent re-renders without a new action
+       state.message = '';
     }
   }, [state, toast, form]);
 
@@ -97,65 +103,51 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form action={formAction} className="space-y-4">
-            <fieldset disabled={formIsDisabled} className="space-y-4">
-              <FormField
-                control={form.control}
+        {/* The form now directly uses the formAction from useActionState */}
+        <form action={formAction} className="space-y-4">
+          <fieldset disabled={formIsDisabled || form.formState.isSubmitting} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre Completo</Label>
+              <Input
+                id="name"
                 name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre Completo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Juan Pérez" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                placeholder="Ej: Juan Pérez"
+                required
               />
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Código del Estudiante</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: 1234" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="gradeId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Grado</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un grado" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {grades.map((grade) => (
-                          <SelectItem key={grade.id} value={grade.id}>
-                            {grade.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </fieldset>
-            <SubmitButton />
-          </form>
-        </Form>
+               {state?.errors?.name && <p className="text-sm font-medium text-destructive">{state.errors.name[0]}</p>}
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="code">Código del Estudiante</Label>
+                <Input
+                    id="code"
+                    name="code"
+                    placeholder="Ej: 1234"
+                    required
+                />
+                 {state?.errors?.code && <p className="text-sm font-medium text-destructive">{state.errors.code[0]}</p>}
+            </div>
+            
+            <div className="space-y-2">
+                <Label htmlFor="gradeId">Grado</Label>
+                <Select name="gradeId" required>
+                    <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un grado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {grades.map((grade) => (
+                        <SelectItem key={grade.id} value={grade.id}>
+                        {grade.name}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                 {state?.errors?.gradeId && <p className="text-sm font-medium text-destructive">{state.errors.gradeId[0]}</p>}
+            </div>
+          </fieldset>
+          <SubmitButton />
+        </form>
       </CardContent>
     </Card>
   );
 }
-
