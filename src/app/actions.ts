@@ -191,7 +191,15 @@ export async function getGrades(): Promise<Grade[]> {
 export async function getTeachers(): Promise<Teacher[]> {
     const teachersCollection = adminDb.collection("teachers");
     const teacherSnapshot = await teachersCollection.get();
-    const teacherList = teacherSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher));
+    const teacherList = teacherSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id,
+            name: data.name,
+            subject: data.subject,
+            grades: data.grades || [] // This now returns an array of grade IDs
+        } as Teacher;
+    });
     return teacherList;
 }
 
@@ -368,6 +376,7 @@ export async function addStudent(prevState: any, formData: FormData) {
         await studentDocRef.set(newStudent);
         
         revalidatePath("/dashboard");
+        revalidatePath("/dashboard/configuration");
 
         console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id} y nombre: ${name}`);
         return { success: true, message: `Estudiante ${name} añadido exitosamente.` , errors: {}};
@@ -385,3 +394,6 @@ export async function addStudent(prevState: any, formData: FormData) {
 
 
 
+
+
+    
