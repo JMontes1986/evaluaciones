@@ -344,7 +344,6 @@ export async function addStudent(data: z.infer<typeof addStudentSchema>) {
     try {
         const studentsCollection = adminDb.collection("students");
         
-        // Verificar si ya existe un estudiante con el mismo código
         const existingStudentQuery = await studentsCollection.where("code", "==", code).limit(1).get();
         if (!existingStudentQuery.empty) {
             return { success: false, message: `Ya existe un estudiante con el código ${code}.` };
@@ -365,3 +364,5 @@ export async function addStudent(data: z.infer<typeof addStudentSchema>) {
         return { success: false, message: "Ocurrió un error en el servidor al añadir el estudiante." };
     }
 }
+
+    
