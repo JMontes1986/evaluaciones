@@ -9,11 +9,11 @@ import { evaluationQuestions } from "@/lib/types";
 
 async function getEvaluationData(student: Student | null) {
   if (!student) {
-    return { availableTeachers: [], studentGradeName: "" };
+    return { availableTeachers: [], allTeachers: [], studentGradeName: "" };
   }
 
   try {
-    const [gradesData, teachersData, pastEvaluations] = await Promise.all([
+    const [gradesData, allTeachersData, pastEvaluations] = await Promise.all([
       getGrades(),
       getTeachers(),
       getEvaluationsByStudent(student.id),
@@ -21,17 +21,17 @@ async function getEvaluationData(student: Student | null) {
 
     const evaluatedTeacherIds = new Set(pastEvaluations.map(e => e.teacherId));
     
-    const availableTeachers = teachersData.filter((t) => 
+    const availableTeachers = allTeachersData.filter((t) => 
         t.grades.includes(student.gradeId) && !evaluatedTeacherIds.has(t.id)
     );
 
     const studentGradeName = gradesData.find(g => g.id === student.gradeId)?.name || "";
 
-    return { availableTeachers, studentGradeName };
+    return { availableTeachers, allTeachers: allTeachersData, studentGradeName };
   } catch (error) {
     console.error("Error fetching evaluation data on server:", error);
     // Devuelve un estado seguro en caso de error para no bloquear la renderización
-    return { availableTeachers: [], studentGradeName: "" };
+    return { availableTeachers: [], allTeachers: [], studentGradeName: "" };
   }
 }
 
@@ -39,7 +39,7 @@ export default async function EvaluationPage() {
     const studentCookie = cookies().get("student_session")?.value;
     const student: Student | null = studentCookie ? JSON.parse(studentCookie) : null;
     
-    const { availableTeachers, studentGradeName } = await getEvaluationData(student);
+    const { availableTeachers, allTeachers, studentGradeName } = await getEvaluationData(student);
 
   return (
     <div className="flex flex-col flex-1">
@@ -53,7 +53,8 @@ export default async function EvaluationPage() {
           {student ? (
             <EvaluationForm 
               student={student} 
-              initialAvailableTeachers={availableTeachers}
+              availableTeachers={availableTeachers}
+              allTeachers={allTeachers}
               studentGradeName={studentGradeName}
               evaluationQuestions={evaluationQuestions}
             />

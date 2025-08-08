@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,13 +27,13 @@ const ratingOptions = [
 
 interface EvaluationFormProps {
   student: Student;
-  initialAvailableTeachers: Teacher[];
+  availableTeachers: Teacher[];
+  allTeachers: Teacher[];
   studentGradeName?: string;
   evaluationQuestions: {id: string, text: string}[];
 }
 
-export function EvaluationForm({ student, initialAvailableTeachers, studentGradeName, evaluationQuestions }: EvaluationFormProps) {
-  const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>(initialAvailableTeachers);
+export function EvaluationForm({ student, availableTeachers, allTeachers, studentGradeName, evaluationQuestions }: EvaluationFormProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [activeAccordion, setActiveAccordion] = useState<string>("");
@@ -80,7 +80,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
         return typeof value === 'string' && value.length > 0;
       });
     });
-  }, [watchedValues, evaluationQuestions, form.watch()]);
+  }, [watchedValues, evaluationQuestions]);
   
   const onSubmit = (data: EvaluationFormData) => {
     startTransition(async () => {
@@ -113,14 +113,10 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
   };
 
   useEffect(() => {
-    setAvailableTeachers(initialAvailableTeachers);
-  }, [initialAvailableTeachers]);
-
-
-  useEffect(() => {
-    if (watchedValues.teacherIds.length > 0 && !activeAccordion) {
-      setActiveAccordion(`item-${watchedValues.teacherIds[0]}`);
-    } else if (watchedValues.teacherIds.length === 0) {
+    const selectedTeachers = watchedValues.teacherIds || [];
+    if (selectedTeachers.length > 0 && !activeAccordion) {
+      setActiveAccordion(`item-${selectedTeachers[0]}`);
+    } else if (selectedTeachers.length === 0) {
       setActiveAccordion("");
     }
   }, [watchedValues.teacherIds, activeAccordion]);
@@ -210,7 +206,7 @@ export function EvaluationForm({ student, initialAvailableTeachers, studentGrade
             </CardHeader>
             <CardContent>
               <Accordion type="single" className="w-full" value={activeAccordion} onValueChange={setActiveAccordion}>
-                {availableTeachers
+                {allTeachers
                   .filter(t => watchedValues.teacherIds.includes(t.id))
                   .map((teacher) => (
                     <AccordionItem value={`item-${teacher.id}`} key={teacher.id}>
