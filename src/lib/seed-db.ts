@@ -1,6 +1,5 @@
 
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
-import { db } from "./firebase"; // Usar la instancia de cliente
+import { adminDb } from './firebase/admin';
 import type { Grade, Teacher, Student } from "./types";
 
 const initialGrades: Omit<Grade, "id">[] = [
@@ -63,41 +62,20 @@ const initialStudents: Omit<Student, 'id'|'gradeId'> & {gradeName: string}[] = [
 ];
 
 
-async function seedCollection(collectionName: string, data: any[], checkField: string) {
-  console.log(`\nChecking collection: ${collectionName}`);
-  const collectionRef = collection(db, collectionName);
-  
-  for (const item of data) {
-    const q = query(collectionRef, where(checkField, "==", item[checkField]));
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-      try {
-        await addDoc(collectionRef, item);
-        console.log(`  -> Added: ${item[checkField]}`);
-      } catch (error) {
-        console.error(`  -> Failed to add ${item[checkField]}:`, error);
-      }
-    } else {
-      console.log(`  -> Exists: ${item[checkField]}`);
-    }
-  }
-}
-
 async function seedDatabase() {
+  let exitCode = 0;
   console.log("🌱 Starting to seed the database...");
 
   try {
-    // ---- Seed Grades ----
-    const gradesCollectionRef = collection(db, "grades");
+    const gradesCollectionRef = adminDb.collection("grades");
     const gradeIdMap = new Map<string, string>();
 
     console.log("📚 Seeding grades...");
     for (const grade of initialGrades) {
-        const q = query(gradesCollectionRef, where("name", "==", grade.name));
-        const querySnapshot = await getDocs(q);
+        const q = gradesCollectionRef.where("name", "==", grade.name);
+        const querySnapshot = await q.get();
         if (querySnapshot.empty) {
-            const docRef = await addDoc(gradesCollectionRef, grade);
+            const docRef = await gradesCollectionRef.add(grade);
             gradeIdMap.set(grade.name, docRef.id);
             console.log(` -> Added grade: ${grade.name}`);
         } else {
@@ -109,17 +87,16 @@ async function seedDatabase() {
     console.log("✅ Grades seeded successfully.");
 
 
-    // ---- Seed Teachers ----
-    const teachersCollectionRef = collection(db, "teachers");
+    const teachersCollectionRef = adminDb.collection("teachers");
     console.log("\n👩‍🏫 Seeding teachers...");
     for (const teacher of initialTeachers) {
-        const q = query(teachersCollectionRef, where("name", "==", teacher.name));
-        const querySnapshot = await getDocs(q);
+        const q = teachersCollectionRef.where("name", "==", teacher.name);
+        const querySnapshot = await q.get();
 
         if (querySnapshot.empty) {
             const gradeIds = teacher.grades.map(gradeName => gradeIdMap.get(gradeName)).filter(Boolean) as string[];
             if (gradeIds.length > 0) {
-                 await addDoc(teachersCollectionRef, { ...teacher, grades: gradeIds });
+                 await teachersCollectionRef.add({ ...teacher, grades: gradeIds });
                  console.log(` -> Added teacher: ${teacher.name}`);
             } else {
                  console.warn(` -> Could not add teacher '${teacher.name}' due to missing grade ID.`);
@@ -131,18 +108,17 @@ async function seedDatabase() {
      console.log("✅ Teachers seeded successfully.");
 
 
-    // ---- Seed Students ----
-    const studentsCollectionRef = collection(db, "students");
+    const studentsCollectionRef = adminDb.collection("students");
     console.log("\n👨‍🎓 Seeding students...");
     for (const student of initialStudents) {
-      const q = query(studentsCollectionRef, where("code", "==", student.code));
-      const querySnapshot = await getDocs(q);
+      const q = studentsCollectionRef.where("code", "==", student.code);
+      const querySnapshot = await q.get();
 
       if (querySnapshot.empty) {
         const gradeId = gradeIdMap.get(student.gradeName);
         if (gradeId) {
           const { gradeName, ...studentData } = student;
-          await addDoc(studentsCollectionRef, { ...studentData, gradeId });
+          await studentsCollectionRef.add({ ...studentData, gradeId });
           console.log(` -> Added student: ${student.name}`);
         } else {
           console.warn(` -> Could not add student '${student.name}' due to missing grade ID for grade '${student.gradeName}'.`);
@@ -157,6 +133,10 @@ async function seedDatabase() {
 
   } catch (error) {
     console.error("❌ Error seeding the database:", error);
+    exitCode = 1;
+  } finally {
+    console.log(`\nScript finished with exit code ${exitCode}.`);
+    // process.exit(exitCode); // <-- This line causes issues in some environments.
   }
 }
 
