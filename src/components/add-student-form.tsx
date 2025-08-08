@@ -130,3 +130,4 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
     </Card>
   );
 }
+
