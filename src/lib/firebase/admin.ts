@@ -1,38 +1,50 @@
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
-import { getApps } from 'firebase-admin/app';
-
-// Next.js carga automáticamente las variables de entorno desde .env.local,
-// por lo que no es necesario llamar a dotenv.config() explícitamente.
+import { getApps, initializeApp, getApp } from 'firebase-admin/app';
 
 const serviceAccountString = process.env.FIREBASE_ADMIN_CONFIG;
-let adminDb: admin.firestore.Firestore;
 
 if (!serviceAccountString) {
     console.warn("ADVERTENCIA: La variable de entorno FIREBASE_ADMIN_CONFIG no está definida. Las operaciones de base de datos del servidor fallarán.");
 }
 
-// Solo inicializa la app si no ha sido inicializada y si las credenciales existen.
-if (getApps().length === 0 && serviceAccountString) {
-    try {
-        const serviceAccount = JSON.parse(serviceAccountString);
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-        });
-        console.log("Firebase Admin SDK inicializado correctamente.");
-    } catch (error: any) {
-        console.error("Error crítico al inicializar Firebase Admin SDK. Verifica el contenido de FIREBASE_ADMIN_CONFIG en tu .env.local:", error.message);
+function initializeAdminApp() {
+    if (getApps().length > 0) {
+        console.log("Firebase Admin SDK ya estaba inicializado.");
+        return getApp();
     }
-} else if (getApps().length > 0) {
-    console.log("Firebase Admin SDK ya estaba inicializado.");
+    
+    if (serviceAccountString) {
+        try {
+            const serviceAccount = JSON.parse(serviceAccountString);
+            console.log("Inicializando Firebase Admin SDK...");
+            return initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+            });
+        } catch (error: any) {
+            console.error("Error crítico al inicializar Firebase Admin SDK. Verifica el contenido de FIREBASE_ADMIN_CONFIG en tu .env.local:", error.message);
+            // Lanza el error para detener la ejecución si la configuración es inválida.
+            throw new Error("La configuración de Firebase Admin es inválida.");
+        }
+    } else {
+        // Lanza un error si las credenciales no están disponibles.
+        throw new Error("FIREBASE_ADMIN_CONFIG no está definida. No se puede inicializar Firebase Admin.");
+    }
 }
 
-if (admin.apps.length > 0) {
-    adminDb = admin.firestore();
-} else {
-    // Esta advertencia se mostrará si FIREBASE_ADMIN_CONFIG no está configurado o falló la inicialización.
-    console.warn("ADVERTENCIA: Firebase Admin no está inicializado. Las operaciones de base de datos del servidor fallarán.");
+// Inicializa la app y obtén la instancia de Firestore.
+let adminDb: admin.firestore.Firestore;
+try {
+    const adminApp = initializeAdminApp();
+    adminDb = admin.firestore(adminApp);
+} catch (error: any) {
+    console.error("Fallo al obtener la instancia de Firestore:", error.message);
+    // Asigna un objeto mock o nulo para evitar que la app crashee en el import,
+    // aunque las operaciones fallarán. Se registrarán advertencias en las funciones que lo usen.
+    // Esto es principalmente para entornos donde las credenciales no son necesarias (ej. build).
+    adminDb = {} as admin.firestore.Firestore;
 }
 
-// Exporta la instancia de la base de datos o undefined si no se pudo inicializar.
+
+// Exporta la instancia de la base de datos.
 export { adminDb };
