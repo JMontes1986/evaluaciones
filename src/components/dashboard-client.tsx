@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -104,8 +105,8 @@ export function DashboardClient() {
         name: grade.name,
         average: getAverageScore(gradeEvals).toFixed(2),
         evaluations: gradeEvals.length
-      }
-    }).filter(Boolean) as { name: string; average: string; evaluations: number }[];
+      };
+    }).filter(Boolean) as { name: string; average: string; evaluations: number }[]);
   }, [filteredData, grades]);
   
   const questionAverages = useMemo(() => {
