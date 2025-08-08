@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -12,6 +12,7 @@ import { addStudent } from '@/app/actions';
 import type { Grade } from '@/lib/types';
 import { UserPlus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormStatus } from 'react-dom';
 
 interface AddStudentFormProps {
   grades: Grade[];
@@ -27,23 +28,34 @@ interface FormState {
     };
 }
 
+const initialState: FormState = {
+    success: false,
+    message: "",
+    errors: {},
+}
+
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending} className="w-full">
+            {pending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+            <UserPlus className="mr-2 h-4 w-4" />
+            )}
+            {pending ? 'Añadiendo...' : 'Añadir Estudiante'}
+        </Button>
+    )
+}
+
 export function AddStudentForm({ grades }: AddStudentFormProps) {
-  const [isPending, startTransition] = useTransition();
-  const [state, setState] = useState<FormState | undefined>();
+  const [state, formAction] = useActionState(addStudent, initialState);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const formIsDisabled = !grades || grades.length === 0;
 
-  const handleSubmit = (formData: FormData) => {
-    setState(undefined); // Clear previous state
-    startTransition(async () => {
-      const result = await addStudent(formData);
-      setState(result);
-    });
-  };
-
   useEffect(() => {
-    if (state) {
+    if (state?.message) {
         if (state.success) {
             toast({
               title: "✅ Estudiante Añadido",
@@ -51,8 +63,8 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
               variant: "default",
               className: "bg-green-600 text-white border-green-700",
             });
-            formRef.current?.reset(); // Reset form on success
-        } else if (state.message) {
+            formRef.current?.reset();
+        } else {
             toast({
               title: "❌ Error",
               description: state.message,
@@ -74,8 +86,8 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form ref={formRef} action={handleSubmit} className="space-y-4">
-          <fieldset disabled={formIsDisabled || isPending} className="space-y-4">
+        <form ref={formRef} action={formAction} className="space-y-4">
+          <fieldset disabled={formIsDisabled} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre Completo</Label>
               <Input
@@ -115,14 +127,7 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
                  {state?.errors?.gradeId && <p className="text-sm font-medium text-destructive">{state.errors.gradeId[0]}</p>}
             </div>
           </fieldset>
-           <Button type="submit" disabled={isPending || formIsDisabled} className="w-full">
-              {isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <UserPlus className="mr-2 h-4 w-4" />
-              )}
-              {isPending ? 'Añadiendo...' : 'Añadir Estudiante'}
-            </Button>
+           <SubmitButton />
         </form>
       </CardContent>
     </Card>

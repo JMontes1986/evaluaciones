@@ -2,6 +2,13 @@
 import { getGrades } from "@/app/actions";
 import { AddStudentForm } from "@/components/add-student-form";
 import { StudentUpload } from "@/components/student-upload";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default async function ConfigurationPage() {
     const grades = await getGrades();

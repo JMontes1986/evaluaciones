@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Download, BarChart3, Users, Star, GraduationCap } from "lucide-react";
 import type { Evaluation, Teacher, Grade, Student } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
-import { AddStudentForm } from "./add-student-form";
-import { StudentUpload } from "./student-upload";
 
 interface DashboardClientProps {
   initialData: {
@@ -27,13 +25,11 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
     evaluations: initialEvaluations, 
     grades: initialGrades, 
     teachers: initialTeachers,
-    students: initialStudents 
   } = initialData;
 
   const [evaluations, setEvaluations] = useState<Evaluation[]>(initialEvaluations || []);
   const [grades, setGrades] = useState<Grade[]>(initialGrades || []);
   const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers || []);
-  const [students, setStudents] = useState<Student[]>(initialStudents || []);
   
   const [filteredData, setFilteredData] = useState<Evaluation[]>(initialEvaluations || []);
   const [selectedGrade, setSelectedGrade] = useState("all");
@@ -288,15 +284,6 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
           </Card>
         </TabsContent>
       </Tabs>
-
-      <div className="mt-6 space-y-2">
-          <h2 className="text-2xl font-bold font-headline">Gestión de Estudiantes</h2>
-          <p className="text-muted-foreground">Añade o actualiza la lista de estudiantes del sistema.</p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <AddStudentForm grades={grades} />
-          <StudentUpload />
-      </div>
     </div>
   );
 }

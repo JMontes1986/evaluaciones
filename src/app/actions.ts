@@ -316,7 +316,7 @@ export async function uploadStudents(studentsData: unknown) {
         await addBatch.commit();
         console.log(`${studentCounter} nuevos estudiantes añadidos.`);
         
-        revalidatePath("/dashboard");
+        revalidatePath("/dashboard/configuration");
 
         let message = `${studentCounter} estudiantes cargados exitosamente.`;
         if (duplicateCounter > 0) {
@@ -341,7 +341,7 @@ const addStudentSchema = z.object({
 });
 
 // Updated action to be compatible with useFormState
-export async function addStudent(formData: FormData) {
+export async function addStudent(prevState: any, formData: FormData) {
     const validatedFields = addStudentSchema.safeParse({
         name: formData.get("name"),
         code: formData.get("code"),
@@ -375,10 +375,8 @@ export async function addStudent(formData: FormData) {
         
         await studentDocRef.set(newStudent);
         
-        revalidatePath("/dashboard");
         revalidatePath("/dashboard/configuration");
 
-        console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id} y nombre: ${name}`);
         return { success: true, message: `Estudiante ${name} añadido exitosamente.` };
 
     } catch (error) {
