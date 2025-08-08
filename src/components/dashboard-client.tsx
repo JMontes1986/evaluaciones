@@ -10,56 +10,34 @@ import { Button } from "@/components/ui/button";
 import { Download, BarChart3, Users, Star, GraduationCap } from "lucide-react";
 import type { Evaluation, Teacher, Grade, Student } from "@/lib/types";
 import { evaluationQuestions } from "@/lib/types";
-import { Skeleton } from "./ui/skeleton";
-import { getDashboardData } from "@/app/actions";
 import { AddStudentForm } from "./add-student-form";
 import { StudentUpload } from "./student-upload";
 
+interface DashboardClientProps {
+  initialData: {
+    evaluations: Evaluation[];
+    grades: Grade[];
+    teachers: Teacher[];
+    students: Student[];
+  };
+}
 
-export function DashboardClient() {
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
-  const [grades, setGrades] = useState<Grade[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filteredData, setFilteredData] = useState<Evaluation[]>([]);
+export function DashboardClient({ initialData }: DashboardClientProps) {
+  const { 
+    evaluations: initialEvaluations, 
+    grades: initialGrades, 
+    teachers: initialTeachers,
+    students: initialStudents 
+  } = initialData;
+
+  const [evaluations, setEvaluations] = useState<Evaluation[]>(initialEvaluations || []);
+  const [grades, setGrades] = useState<Grade[]>(initialGrades || []);
+  const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers || []);
+  const [students, setStudents] = useState<Student[]>(initialStudents || []);
+  
+  const [filteredData, setFilteredData] = useState<Evaluation[]>(initialEvaluations || []);
   const [selectedGrade, setSelectedGrade] = useState("all");
   const [selectedTeacher, setSelectedTeacher] = useState("all");
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
-      try {
-        const data = await getDashboardData();
-        if (data) {
-          const { evaluations: evals, grades: gradesData, teachers: teachersData, students: studentsData } = data;
-          setEvaluations(evals || []);
-          setFilteredData(evals || []);
-          setGrades(gradesData || []);
-          setTeachers(teachersData || []);
-          setStudents(studentsData || []);
-        } else {
-            setEvaluations([]);
-            setFilteredData([]);
-            setGrades([]);
-            setTeachers([]);
-            setStudents([]);
-        }
-
-      } catch (error) {
-        console.error("Error fetching data: ", error);
-        setEvaluations([]);
-        setFilteredData([]);
-        setGrades([]);
-        setTeachers([]);
-        setStudents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
 
   const filterData = useCallback(() => {
     let data = evaluations;
@@ -147,45 +125,6 @@ export function DashboardClient() {
     a.click();
     document.body.removeChild(a);
   };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-1/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-5 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-1/2 mt-2" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-4 w-2/3" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="w-full h-[350px]" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-6">
@@ -361,5 +300,3 @@ export function DashboardClient() {
     </div>
   );
 }
-
-    

@@ -1,8 +1,9 @@
-
-"use client";
 import { DashboardClient } from "@/components/dashboard-client";
+import { getDashboardData } from "@/app/actions";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const dashboardData = await getDashboardData();
+
   return (
     <div className="flex flex-col flex-1">
         <div className="space-y-2 mb-6">
@@ -10,7 +11,7 @@ export default function DashboardPage() {
             <p className="text-muted-foreground">Resultados agregados de las evaluaciones de los estudiantes.</p>
         </div>
         <div className="mt-6">
-          <DashboardClient />
+          <DashboardClient initialData={dashboardData} />
         </div>
     </div>
   );
