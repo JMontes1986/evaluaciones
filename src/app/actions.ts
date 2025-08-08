@@ -1,3 +1,4 @@
+
 "use server";
 
 import { z } from "zod";
@@ -295,8 +296,7 @@ export async function uploadStudents(studentsData: unknown) {
                 continue; // Skip student if grade doesn't exist
             }
             
-            const studentId = `s${Date.now()}${studentCounter}`; // More unique ID
-            const studentDocRef = studentsCollectionRef.doc(studentId);
+            const studentDocRef = studentsCollectionRef.doc(); // Firestore auto-generates ID
 
             const newStudent: Omit<Student, 'id'> = {
                 name: student.name,
@@ -324,3 +324,5 @@ export async function uploadStudents(studentsData: unknown) {
         return { success: false, message: "Ocurrió un error en el servidor al procesar el archivo. Revisa los registros para más detalles." };
     }
 }
+
+    
