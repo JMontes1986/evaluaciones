@@ -22,9 +22,9 @@ const initialState = {
   message: '',
   success: false,
   errors: {
-    name: [],
-    code: [],
-    gradeId: [],
+    name: [] as string[],
+    code: [] as string[],
+    gradeId: [] as string[],
   },
 };
 
