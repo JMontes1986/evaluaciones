@@ -271,24 +271,21 @@ export async function uploadStudents(studentsData: unknown) {
         console.log("Mapa de grados creado:", gradeMap);
 
         const studentsCollectionRef = adminDb.collection("students");
-
-        console.log("Borrando todos los estudiantes existentes...");
         const existingStudentsSnapshot = await studentsCollectionRef.get();
-        if (!existingStudentsSnapshot.empty) {
-            const deleteBatch = adminDb.batch();
-            existingStudentsSnapshot.docs.forEach(doc => deleteBatch.delete(doc.ref));
-            await deleteBatch.commit();
-            console.log(`${existingStudentsSnapshot.size} estudiantes existentes eliminados.`);
-        } else {
-            console.log("No se encontraron estudiantes existentes para eliminar.");
-        }
+        const existingCodes = new Set(existingStudentsSnapshot.docs.map(doc => doc.data().code));
         
-        console.log("Añadiendo nuevos estudiantes...");
+        console.log("Añadiendo nuevos estudiantes y omitiendo duplicados...");
         const addBatch = adminDb.batch();
         let studentCounter = 0;
         let skippedCounter = 0;
+        let duplicateCounter = 0;
         
         for (const student of validatedFields.data) {
+            if(existingCodes.has(student.code)) {
+                duplicateCounter++;
+                continue; // Skip student if code already exists
+            }
+
             const gradeId = gradeMap.get(student.grade);
             if (!gradeId) {
                 skippedCounter++;
@@ -313,6 +310,9 @@ export async function uploadStudents(studentsData: unknown) {
         revalidatePath("/dashboard");
 
         let message = `${studentCounter} estudiantes cargados exitosamente.`;
+        if (duplicateCounter > 0) {
+            message += ` ${duplicateCounter} estudiantes fueron omitidos porque su código ya existía.`;
+        }
         if (skippedCounter > 0) {
             message += ` ${skippedCounter} estudiantes fueron omitidos debido a que su grado no fue encontrado.`;
         }

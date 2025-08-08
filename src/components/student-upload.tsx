@@ -104,7 +104,7 @@ export function StudentUpload() {
                     description: result.message,
                     variant: "default",
                     className: "bg-green-600 text-white border-green-700",
-                    duration: 5000,
+                    duration: 8000,
                 });
                 setFiles([]);
                 setParsedData([]);
@@ -113,7 +113,7 @@ export function StudentUpload() {
                     title: "❌ ¡Error en la Carga!",
                     description: result?.message || "Ocurrió un error desconocido al cargar el archivo.",
                     variant: "destructive",
-                    duration: 5000,
+                    duration: 8000,
                 });
             }
         });
@@ -124,7 +124,7 @@ export function StudentUpload() {
             <CardHeader>
                 <CardTitle>Carga Masiva de Estudiantes</CardTitle>
                 <CardDescription>
-                    Sube un archivo CSV con las columnas 'name', 'code' y 'grade' para reemplazar la lista de estudiantes.
+                    Sube un archivo CSV para añadir nuevos estudiantes. El sistema omitirá a los estudiantes cuyo código ya exista. Columnas requeridas: 'name', 'code', 'grade'.
                 </CardDescription>
                  <Button asChild variant="outline" className="w-fit">
                     <Link href="/plantilla_estudiantes.csv" download>
