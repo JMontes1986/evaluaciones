@@ -58,8 +58,8 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
           variant: "default",
           className: "bg-green-600 text-white border-green-700",
         });
-        // Resetting form would require a ref, but letting the action clear it is better.
-        // Or just let the user see the success and continue.
+        // You might want to reset the form here. For actions, this can be tricky.
+        // A full page revalidation triggered by the action is usually the Next.js way.
       } else {
         toast({
           title: "❌ Error",
@@ -130,4 +130,5 @@ export function AddStudentForm({ grades }: AddStudentFormProps) {
     </Card>
   );
 }
+
 

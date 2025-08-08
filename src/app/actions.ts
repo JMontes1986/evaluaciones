@@ -362,8 +362,8 @@ export async function addStudent(prevState: any, formData: FormData) {
         const newStudent: Omit<Student, 'id'> = { name, code, gradeId };
         
         await studentDocRef.set(newStudent);
-
         console.log(`Nuevo estudiante añadido con ID: ${studentDocRef.id}`);
+        
         revalidatePath("/dashboard");
 
         return { success: true, message: `Estudiante ${name} añadido exitosamente.` , errors: {}};
@@ -374,4 +374,5 @@ export async function addStudent(prevState: any, formData: FormData) {
     }
 }
     
+
 
