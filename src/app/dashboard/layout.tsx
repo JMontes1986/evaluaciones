@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, BarChart3 } from "lucide-react";
 import { logout } from "@/app/actions";
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
@@ -22,11 +22,14 @@ export default function DashboardLayout({
         <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
             <img src="/recurso 11.png" alt="ColGemelli Logo" className="h-8 w-8" />
-            <h1 className="text-xl font-bold font-headline hidden sm:block">Admin Dashboard</h1>
+            <h1 className="text-xl font-bold font-headline hidden sm:block">Admin ColGemelli</h1>
             </Link>
              <nav className="flex items-center gap-2">
-                <Button asChild variant={pathname === '/dashboard' ? 'secondary' : 'ghost'} size="sm">
-                    <Link href="/dashboard">Resultados</Link>
+                <Button asChild variant={pathname === '/dashboard/results' ? 'secondary' : 'ghost'} size="sm">
+                    <Link href="/dashboard/results">
+                        <BarChart3 className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Resultados</span>
+                    </Link>
                 </Button>
                 <Button asChild variant={pathname === '/dashboard/configuration' ? 'secondary' : 'ghost'} size="sm">
                     <Link href="/dashboard/configuration">
@@ -37,7 +40,6 @@ export default function DashboardLayout({
             </nav>
         </div>
         <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground hidden md:block">Bienvenido al panel de administración.</p>
             <form action={logout}>
                 <Button variant="outline" type="submit" size="sm" className="justify-start gap-2">
                 <LogOut className="h-4 w-4" />
@@ -52,3 +54,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+    

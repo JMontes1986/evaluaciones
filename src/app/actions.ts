@@ -150,7 +150,7 @@ export async function submitEvaluation(data: EvaluationFormData) {
 
     await batch.commit();
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/results");
     revalidatePath("/evaluation");
 
     return {
@@ -366,3 +366,5 @@ export async function addStudent(prevState: any, formData: FormData) {
         };
     }
 }
+
+    
