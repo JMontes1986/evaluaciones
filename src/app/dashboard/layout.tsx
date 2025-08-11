@@ -25,7 +25,7 @@ export default function DashboardLayout({
                 <h1 className="text-xl font-bold font-headline hidden sm:block">Admin ColGemelli</h1>
             </Link>
              <nav className="flex items-center gap-2">
-                <Button asChild variant={pathname.startsWith('/dashboard') ? 'secondary' : 'ghost'} size="sm">
+                <Button asChild variant={pathname === '/dashboard' ? 'secondary' : 'ghost'} size="sm">
                     <Link href="/dashboard">
                         <BarChart3 className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Resultados</span>
