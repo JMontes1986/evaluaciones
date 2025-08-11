@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from "zod";
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import type { Evaluation, Grade, Teacher, Student } from "@/lib/types";
@@ -68,6 +68,7 @@ export async function studentLogin(prevState: any, formData: FormData) {
 
     const { code } = validatedFields.data;
 
+    const adminDb = getAdminDb();
     const studentsCollection = adminDb.collection("students");
     const q = studentsCollection.where("code", "==", code);
     const studentSnapshot = await q.get();
@@ -111,7 +112,8 @@ export async function submitEvaluation(data: EvaluationFormData) {
   }
 
   const { studentId, teacherIds, evaluations } = validatedFields.data;
-  
+
+  const adminDb = getAdminDb();
   const studentDoc = await adminDb.collection("students").doc(studentId).get();
   if (!studentDoc.exists) {
       return { success: false, message: "No se pudo encontrar la información del estudiante." };
@@ -167,6 +169,7 @@ export async function submitEvaluation(data: EvaluationFormData) {
 }
 
 export async function getGrades(): Promise<Grade[]> {
+    const adminDb = getAdminDb();
     const gradesCollection = adminDb.collection("grades");
     const gradeSnapshot = await gradesCollection.get();
     const gradeList = gradeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grade));
@@ -179,6 +182,7 @@ export async function getGrades(): Promise<Grade[]> {
 }
 
 export async function getTeachers(): Promise<Teacher[]> {
+    const adminDb = getAdminDb();
     const teachersCollection = adminDb.collection("teachers");
     const teacherSnapshot = await teachersCollection.get();
     const teacherList = teacherSnapshot.docs.map(doc => {
@@ -194,12 +198,14 @@ export async function getTeachers(): Promise<Teacher[]> {
 }
 
 export async function getStudents(): Promise<Student[]> {
+  const adminDb = getAdminDb();
   const studentsCollection = adminDb.collection("students");
   const studentSnapshot = await studentsCollection.get();
   return studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
 }
 
 export async function getEvaluations(): Promise<Evaluation[]> {
+    const adminDb = getAdminDb();
     const evaluationsCollection = adminDb.collection("evaluations");
     const evaluationSnapshot = await evaluationsCollection.get();
     const evaluationList = evaluationSnapshot.docs.map(doc => {
@@ -231,6 +237,7 @@ export async function getDashboardData() {
 
 export async function getEvaluationsByStudent(studentId: string): Promise<Evaluation[]> {
     if (!studentId) return [];
+    const adminDb = getAdminDb();
     const evaluationsCollection = adminDb.collection("evaluations");
     const q = evaluationsCollection.where("studentId", "==", studentId);
     const evaluationSnapshot = await q.get();
@@ -263,10 +270,11 @@ export async function uploadStudents(studentsData: unknown) {
         const grades = await getGrades();
         const gradeMap = new Map(grades.map(g => [g.name, g.id]));
 
+        const adminDb = getAdminDb();
         const studentsCollectionRef = adminDb.collection("students");
         const existingStudentsSnapshot = await studentsCollectionRef.get();
         const existingCodes = new Set(existingStudentsSnapshot.docs.map(doc => doc.data().code));
-        
+      
         const addBatch = adminDb.batch();
         let studentCounter = 0;
         let skippedCounter = 0;
@@ -338,6 +346,7 @@ export async function addStudent(prevState: any, formData: FormData) {
     const { name, code, gradeId } = validatedFields.data;
 
     try {
+        const adminDb = getAdminDb();
         const studentsCollection = adminDb.collection("students");
         
         const existingStudentQuery = await studentsCollection.where("code", "==", code).limit(1).get();
