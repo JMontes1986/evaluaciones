@@ -14,7 +14,7 @@ export default function AdministrationPage() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-             <Link href="/dashboard" className="hover:scale-105 transform transition-transform duration-300">
+             <Link href="/dashboard/results" className="hover:scale-105 transform transition-transform duration-300">
                 <Card className="h-full flex flex-col justify-between shadow-lg hover:shadow-primary/20">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-2xl">
