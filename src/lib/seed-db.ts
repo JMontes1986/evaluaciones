@@ -1,5 +1,5 @@
 
-import { adminDb } from './firebase/admin';
+import { getAdminDb } from './firebase/admin';
 import type { Grade, Teacher, Student } from "./types";
 
 const initialGrades: Omit<Grade, "id">[] = [
@@ -29,7 +29,7 @@ const initialTeachers: Omit<Teacher, "id">[] = [
     { name: "Sandra Patricia Pérez Mesa", subject: "Informática", grades: ["3°"] }
 ];
 
-const initialStudents: Omit<Student, 'id'|'gradeId'> & {gradeName: string}[] = [
+const initialStudents: (Omit<Student, 'id'|'gradeId'> & {gradeName: string})[] = [
     { name: "ARCILA DÍAZ SAMANTHA", code: "5540", gradeName: "3°" },
     { name: "ARÍAS GONZÁLEZ DAMIAN", code: "5741", gradeName: "3°" },
     { name: "BOTERO GIRALDO SANTIAGO", code: "5593", gradeName: "3°" },
@@ -67,6 +67,7 @@ async function seedDatabase() {
   console.log("🌱 Starting to seed the database...");
 
   try {
+    const adminDb = getAdminDb();
     const gradesCollectionRef = adminDb.collection("grades");
     const gradeIdMap = new Map<string, string>();
 
