@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Proteger rutas de admin
-  if (!adminSession && pathname.startsWith("/dashboard")) {
+  if (!adminSession && (pathname.startsWith("/dashboard") || pathname.startsWith("/administracion"))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -24,5 +24,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/"],
+  matcher: ["/dashboard/:path*", "/administracion/:path*", "/login", "/"],
 };
