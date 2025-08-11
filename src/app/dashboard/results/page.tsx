@@ -17,5 +17,3 @@ export default async function DashboardResultsPage() {
     </div>
   );
 }
-
-    
