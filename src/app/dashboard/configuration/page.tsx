@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 
 import { getGrades } from "@/app/actions";
 import { AddStudentForm } from "@/components/add-student-form";

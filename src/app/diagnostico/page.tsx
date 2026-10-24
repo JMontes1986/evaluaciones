@@ -17,8 +17,9 @@ function StatusIndicator({ success, text }: { success: boolean, text: string }) 
 }
 
 export default async function DiagnosticPage() {
-    const adminSessionCookie = cookies().get("session");
-    const studentSessionCookie = cookies().get("student_session");
+    const cookieStore = await cookies();
+    const adminSessionCookie = cookieStore.get("session");
+    const studentSessionCookie = cookieStore.get("student_session");
 
     let dbStatus = { success: false, message: "No se pudo conectar a la base de datos." };
     try {
@@ -65,7 +66,7 @@ export default async function DiagnosticPage() {
                             <div className="p-3 bg-muted rounded-md text-sm">
                                 <p><span className="font-semibold">Nombre:</span> {adminSessionCookie.name}</p>
                                 <p><span className="font-semibold">Valor:</span> {adminSessionCookie.value}</p>
-                                <p><span className="font-semibold">Expira:</span> {new Date(adminSessionCookie.expires!).toLocaleString()}</p>
+                                <p><span className="font-semibold">Expira:</span> No disponible en RequestCookie</p>
                             </div>
                         )}
                     </CardContent>
