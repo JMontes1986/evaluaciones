@@ -17,8 +17,9 @@ function StatusIndicator({ success, text }: { success: boolean, text: string }) 
 }
 
 export default async function DiagnosticPage() {
-    const adminSessionCookie = cookies().get("session");
-    const studentSessionCookie = cookies().get("student_session");
+    const cookieStore = await cookies();
+    const adminSessionCookie = cookieStore.get("session");
+    const studentSessionCookie = cookieStore.get("student_session");
 
     let dbStatus = { success: false, message: "No se pudo conectar a la base de datos." };
     try {
