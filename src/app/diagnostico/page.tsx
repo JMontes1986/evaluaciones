@@ -66,7 +66,7 @@ export default async function DiagnosticPage() {
                             <div className="p-3 bg-muted rounded-md text-sm">
                                 <p><span className="font-semibold">Nombre:</span> {adminSessionCookie.name}</p>
                                 <p><span className="font-semibold">Valor:</span> {adminSessionCookie.value}</p>
-                                <p><span className="font-semibold">Expira:</span> {new Date(adminSessionCookie.expires!).toLocaleString()}</p>
+                                <p><span className="font-semibold">Expira:</span> No disponible en RequestCookie</p>
                             </div>
                         )}
                     </CardContent>
