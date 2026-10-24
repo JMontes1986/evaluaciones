@@ -36,7 +36,7 @@ async function getEvaluationData(student: Student | null) {
 }
 
 export default async function EvaluationPage() {
-    const studentCookie = cookies().get("student_session")?.value;
+    const studentCookie = (await cookies()).get("student_session")?.value;
     const student: Student | null = studentCookie ? JSON.parse(studentCookie) : null;
     
     const { availableTeachers, allTeachers, studentGradeName } = await getEvaluationData(student);
